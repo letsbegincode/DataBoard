@@ -2,15 +2,13 @@
 
 Full-stack app for authenticated users to **upload CSV datasets**, preview/delete them, **compute** min/max/sum on numeric columns, and **plot** two columns with Apache ECharts.
 
-**Public repo:** https://github.com/letsbegincode/DataBoard  
+**Public repo:** https://github.com/letsbegincode/DataBoard
 
-Original Coderbyte brief + spec (untouched): [`assignment/`](./assignment/)
+- [architecture.md](./architecture.md) — system design, layers, DB schema  
+- [api.md](./api.md) — endpoint map  
+- [assumptions.md](./assumptions.md) — technical choices where the spec is silent  
 
-| Doc | Purpose |
-|---|---|
-| [architecture.md](./architecture.md) | System design, layers, DB schema |
-| [assumptions.md](./assumptions.md) | Technical choices where the spec is silent |
-| [api.md](./api.md) | Endpoint map |
+Original Coderbyte brief + spec: [`assignment/`](./assignment/)
 
 ---
 
