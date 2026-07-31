@@ -21,14 +21,20 @@ export default function LoginPage() {
     setError("");
     try {
       if (isRegister) {
-        await register(email, password);
+        await register(email.trim(), password);
       } else {
-        await login(email, password);
+        await login(email.trim(), password);
       }
       navigate("/");
     } catch (err: any) {
       const detail = err.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Something went wrong");
+      if (typeof detail === "string") {
+        setError(detail);
+      } else if (Array.isArray(detail)) {
+        setError(detail.map((d: { msg?: string }) => d.msg || "Invalid input").join(" "));
+      } else {
+        setError("Something went wrong");
+      }
     }
   };
 
@@ -41,7 +47,7 @@ export default function LoginPage() {
         <h1>{isRegister ? "Create account" : "Welcome back"}</h1>
         <p className="login-lead">
           {isRegister
-            ? "Register with email and password (min 6 characters). Passwords are hashed with argon2."
+            ? "Create an account with a valid email and password (min 6 characters)."
             : "Sign in to manage private CSV datasets, compute stats, and plot charts."}
         </p>
         <form onSubmit={handleSubmit}>

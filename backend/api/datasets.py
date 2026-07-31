@@ -18,8 +18,23 @@ def upload_dataset(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    dataset_name = name.strip()
+    if not dataset_name:
+        raise HTTPException(status_code=400, detail="Dataset name is required")
+
     if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are accepted")
+
+    duplicate = (
+        db.query(Dataset)
+        .filter(Dataset.user_id == user.id, Dataset.name == dataset_name)
+        .first()
+    )
+    if duplicate:
+        raise HTTPException(
+            status_code=409,
+            detail=f"You already have a dataset named '{dataset_name}'. Choose a different name.",
+        )
 
     try:
         content = file.file.read()
@@ -32,7 +47,7 @@ def upload_dataset(
 
     dataset = Dataset(
         user_id=user.id,
-        name=name,
+        name=dataset_name,
         original_filename=file.filename,
         column_names=df.columns.tolist(),
         row_count=len(df),

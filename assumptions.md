@@ -24,7 +24,9 @@ Assumptions fill gaps where [`assignment/ProjectSpec.md`](./assignment/ProjectSp
 |---|---|
 | Path style | Singular **`/dataset`** (matches spec), plus `/auth/*` |
 | Auth extras | Spec lists register/login; we also implement **refresh**, **logout**, and **`GET /auth/me`** |
+| Register / login email | Validated with Pydantic **`EmailStr`** (normalized lower/strip); not mailbox verification |
 | Register response | Spec says “returns JWT”; we return `{ id, email, message }` then **auto-login** on the client |
+| Dataset names | **Unique per user** (409 on duplicate); list UI shows the user-given name (filename kept in DB only) |
 | Preview | First **25** rows + column names |
 | Plot | First **30** values for `col1` & `col2` via `GET /dataset/:id/plot` |
 | Compute body | `{ "column": string, "operation": "min" \| "max" \| "sum" }` |

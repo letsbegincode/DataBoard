@@ -138,8 +138,8 @@ export default function DataPage() {
           <h2>Upload Dataset</h2>
           <InfoCard title="Upload tips" defaultOpen={false} className="info-card--nested">
             <p>
-              Choose a friendly name and a <strong>.csv</strong> file. Columns can be text or
-              numbers. Try files in <code>sample_data/</code>.
+              Choose a unique name for this dataset and a <strong>.csv</strong> file. Names must be
+              unique in your library. Try files in <code>sample_data/</code>.
             </p>
           </InfoCard>
           <form onSubmit={handleUpload}>
@@ -187,7 +187,7 @@ export default function DataPage() {
           {!listLoading && datasets && datasets.items.map((ds) => (
             <div key={ds.id} className="dataset-item">
               <div>
-                <strong>{ds.name}</strong> ({ds.original_filename})
+                <strong>{ds.name}</strong>
                 <span className="dataset-meta">
                   {" "}— {ds.row_count} rows, {ds.column_names.length} columns
                 </span>
