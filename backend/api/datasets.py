@@ -7,7 +7,7 @@ from core.database import get_db
 from api.deps import get_current_user
 from models.user import User
 from models.dataset import Dataset, DataRow
-from schemas.dataset import DatasetResponse, DatasetListResponse
+from schemas.dataset import DatasetResponse, DatasetListResponse, DatasetPreviewResponse
 
 router = APIRouter(prefix="/dataset", tags=["dataset"])
 
@@ -105,3 +105,35 @@ def get_dataset(
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
     return dataset
+
+
+@router.get("/{dataset_id}/preview", response_model=DatasetPreviewResponse)
+def preview_dataset(
+    dataset_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    dataset = (
+        db.query(Dataset)
+        .filter(Dataset.id == dataset_id, Dataset.user_id == user.id)
+        .first()
+    )
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    rows = (
+        db.query(DataRow)
+        .filter(DataRow.dataset_id == dataset_id)
+        .order_by(DataRow.row_index)
+        .limit(25)
+        .all()
+    )
+
+    return DatasetPreviewResponse(
+        dataset_id=dataset.id,
+        name=dataset.name,
+        column_names=dataset.column_names,
+        rows=[row.data for row in rows],
+        total_rows=dataset.row_count,
+        preview_rows=len(rows),
+    )

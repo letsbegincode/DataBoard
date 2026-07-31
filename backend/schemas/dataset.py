@@ -20,3 +20,11 @@ class DatasetListResponse(BaseModel):
     pages: int
     has_next: bool
     has_prev: bool
+
+class DatasetPreviewResponse(BaseModel):
+    dataset_id: int
+    name: str
+    column_names: list[str]
+    rows: list[dict]
+    total_rows: int
+    preview_rows: int
