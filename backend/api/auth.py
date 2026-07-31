@@ -1,12 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 from api.deps import get_current_user
+from core.config import settings
 from core.database import get_db
 from core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 from models.user import User
 from schemas.auth import RegisterRequest, RegisterResponse, LoginRequest, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _refresh_cookie_kwargs() -> dict:
+    """Cookie flags for refresh JWT — use Secure + SameSite=none across Vercel/Render."""
+    samesite = settings.COOKIE_SAMESITE.lower()
+    if samesite not in ("lax", "strict", "none"):
+        samesite = "lax"
+    return {
+        "httponly": True,
+        "secure": settings.COOKIE_SECURE,
+        "samesite": samesite,
+        "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    }
+
 
 @router.post("/register", response_model=RegisterResponse, status_code=201)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
@@ -40,14 +55,7 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
 
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=7 * 24 * 60 * 60,
-    )
+    response.set_cookie(key="refresh_token", value=refresh_token, **_refresh_cookie_kwargs())
 
     return TokenResponse(access_token=access_token)
 
@@ -78,19 +86,18 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
     new_access_token = create_access_token(user.id)
 
     new_refresh_token = create_refresh_token(user.id)
-    response.set_cookie(
-        key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=7 * 24 * 60 * 60,
-    )
+    response.set_cookie(key="refresh_token", value=new_refresh_token, **_refresh_cookie_kwargs())
 
     return TokenResponse(access_token=new_access_token)
 
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie("refresh_token", httponly=True, samesite="lax")
+    kwargs = _refresh_cookie_kwargs()
+    response.delete_cookie(
+        "refresh_token",
+        httponly=kwargs["httponly"],
+        secure=kwargs["secure"],
+        samesite=kwargs["samesite"],
+    )
     return {"message": "Logged out successfully"}
