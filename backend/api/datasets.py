@@ -137,3 +137,23 @@ def preview_dataset(
         total_rows=dataset.row_count,
         preview_rows=len(rows),
     )
+
+
+@router.delete("/{dataset_id}", status_code=200)
+def delete_dataset(
+    dataset_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    dataset = (
+        db.query(Dataset)
+        .filter(Dataset.id == dataset_id, Dataset.user_id == user.id)
+        .first()
+    )
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    name = dataset.name
+    db.delete(dataset)
+    db.commit()
+    return {"message": f"Dataset '{name}' deleted successfully"}
