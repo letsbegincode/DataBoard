@@ -3,8 +3,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.database import engine, Base
-from models.user import User  # noqa: F401 — register model with Base.metadata
+from models.user import User  # noqa: F401
+from models.dataset import Dataset, DataRow  # noqa: F401
 from api.auth import router as auth_router
+from api.datasets import router as dataset_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(dataset_router)
 
 @app.get("/health")
 def health_check():
