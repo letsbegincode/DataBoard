@@ -7,6 +7,7 @@ Full-stack app for authenticated users to **upload CSV datasets**, preview/delet
 - [architecture.md](./architecture.md) — system design, layers, DB schema  
 - [api.md](./api.md) — endpoint map  
 - [assumptions.md](./assumptions.md) — technical choices where the spec is silent  
+- [deployments.md](./deployments.md) — live demo (Vercel + Render + Neon) and why first load can be slow  
 
 Original Coderbyte brief + spec: [`assignment/`](./assignment/)
 
@@ -156,6 +157,7 @@ DataBoard/
 ├── architecture.md
 ├── assumptions.md
 ├── api.md
+├── deployments.md            # Vercel + Render + Neon live deploy
 ├── assignment/               # Original Coderbyte brief + ProjectSpec
 │   ├── README.md
 │   └── ProjectSpec.md
@@ -179,4 +181,5 @@ DataBoard/
 - [Architecture](./architecture.md)
 - [Assumptions](./assumptions.md)
 - [API map](./api.md)
+- [Deployments](./deployments.md)
 - [Assignment materials](./assignment/)
