@@ -39,7 +39,8 @@ export default function DataPage() {
       setDatasetName("");
       fetchDatasets();
     } catch (err: any) {
-      setUploadError(err.response?.data?.detail || "Upload failed");
+      const detail = err.response?.data?.detail;
+      setUploadError(typeof detail === "string" ? detail : "Upload failed");
     } finally {
       setLoading(false);
     }

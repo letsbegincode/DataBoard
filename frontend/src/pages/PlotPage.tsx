@@ -50,7 +50,8 @@ export default function PlotPage() {
       });
       setComputeResult(result);
     } catch (err: any) {
-      setComputeError(err.response?.data?.detail || "Compute failed");
+      const detail = err.response?.data?.detail;
+      setComputeError(typeof detail === "string" ? detail : "Compute failed");
     }
   };
 
@@ -61,7 +62,8 @@ export default function PlotPage() {
       const data = await getPlotData(selectedDataset.id, col1, col2);
       setPlotData(data);
     } catch (err: any) {
-      setPlotError(err.response?.data?.detail || "Failed to get plot data");
+      const detail = err.response?.data?.detail;
+      setPlotError(typeof detail === "string" ? detail : "Failed to get plot data");
     }
   };
 

@@ -5,9 +5,7 @@ export async function uploadDataset(file: File, name: string): Promise<Dataset> 
   const formData = new FormData();
   formData.append("file", file);
   formData.append("name", name);
-  const res = await client.post("/dataset", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await client.post("/dataset", formData);
   return res.data;
 }
 
@@ -31,6 +29,7 @@ export async function computeStatistic(datasetId: number, data: ComputeRequest):
 }
 
 export async function getPlotData(datasetId: number, col1: string, col2: string): Promise<PlotData> {
-  const res = await client.get(`/dataset/${datasetId}/plot?col1=${col1}&col2=${col2}`);
+  const params = new URLSearchParams({ col1, col2 });
+  const res = await client.get(`/dataset/${datasetId}/plot?${params}`);
   return res.data;
 }

@@ -5,10 +5,10 @@ from core.database import get_db
 from core.security import decode_token
 from models.user import User
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
     """
@@ -21,6 +21,12 @@ def get_current_user(
     Usage in any endpoint:
         def my_endpoint(user: User = Depends(get_current_user)):
     """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
     payload = decode_token(credentials.credentials)
     if payload is None:
         raise HTTPException(
