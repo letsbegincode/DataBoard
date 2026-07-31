@@ -37,25 +37,35 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1>{isRegister ? "Register" : "Login"}</h1>
+        <p className="eyebrow">DataBoard</p>
+        <h1>{isRegister ? "Create account" : "Welcome back"}</h1>
+        <p className="login-lead">
+          {isRegister
+            ? "Register with email and password (min 6 characters). Passwords are hashed with argon2."
+            : "Sign in to manage private CSV datasets, compute stats, and plot charts."}
+        </p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label htmlFor="email">Email</label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete={isRegister ? "new-password" : "current-password"}
             />
           </div>
           {error && <p className="error">{error}</p>}

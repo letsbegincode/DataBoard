@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import Navbar from "../components/Navbar";
 import { Dataset, PlotData, ComputeResponse } from "../types";
@@ -6,20 +6,32 @@ import { listDatasets, getPlotData, computeStatistic } from "../api/datasets";
 
 type ChartType = "scatter" | "line" | "bar";
 
+function isNumericValue(v: unknown): boolean {
+  if (v === null || v === undefined || v === "") return false;
+  if (typeof v === "number") return Number.isFinite(v);
+  if (typeof v === "string") {
+    const n = Number(v);
+    return v.trim() !== "" && Number.isFinite(n);
+  }
+  return false;
+}
+
+function toNumber(v: unknown): number {
+  return typeof v === "number" ? v : Number(v);
+}
+
 export default function PlotPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
 
-  // Compute section state
   const [computeCol, setComputeCol] = useState("");
   const [computeOp, setComputeOp] = useState<"min" | "max" | "sum">("sum");
   const [computeResult, setComputeResult] = useState<ComputeResponse | null>(null);
   const [computeError, setComputeError] = useState("");
 
-  // Plot section state
   const [col1, setCol1] = useState("");
   const [col2, setCol2] = useState("");
-  const [chartType, setChartType] = useState<ChartType>("scatter");
+  const [chartType, setChartType] = useState<ChartType>("bar");
   const [plotData, setPlotData] = useState<PlotData | null>(null);
   const [plotError, setPlotError] = useState("");
 
@@ -67,81 +79,212 @@ export default function PlotPage() {
     }
   };
 
-  const getChartOption = () => {
-    if (!plotData) return {};
+  const { option, hint } = useMemo(() => {
+    if (!plotData) return { option: {}, hint: "" };
+
+    const xRaw = plotData.col1_values;
+    const yRaw = plotData.col2_values;
+    const xNumeric = xRaw.every((v) => v == null || isNumericValue(v));
+    const yNumeric = yRaw.every((v) => v == null || isNumericValue(v));
+    const xHasNum = xRaw.some(isNumericValue);
+    const yHasNum = yRaw.some(isNumericValue);
 
     if (chartType === "scatter") {
+      if (xHasNum && yHasNum && xNumeric && yNumeric) {
+        return {
+          hint: "Scatter: both axes numeric.",
+          option: {
+            title: { text: `${plotData.col1_name} vs ${plotData.col2_name}` },
+            tooltip: { trigger: "item" },
+            grid: { left: 56, right: 24, top: 56, bottom: 56 },
+            xAxis: { name: plotData.col1_name, type: "value", scale: true },
+            yAxis: { name: plotData.col2_name, type: "value", scale: true },
+            series: [{
+              type: "scatter",
+              symbolSize: 10,
+              data: xRaw.map((v, i) => [toNumber(v), toNumber(yRaw[i])]),
+            }],
+          },
+        };
+      }
+
+      const xCats = xRaw.map((v) => (v == null ? "—" : String(v)));
+      const yCats = yRaw.map((v) => (v == null ? "—" : String(v)));
+      const uniqX = [...new Set(xCats)];
+      const uniqY = [...new Set(yCats)];
       return {
-        title: { text: `${plotData.col1_name} vs ${plotData.col2_name}` },
-        tooltip: { trigger: "item" },
-        xAxis: { name: plotData.col1_name, type: "value" },
-        yAxis: { name: plotData.col2_name, type: "value" },
-        series: [{
-          type: "scatter",
-          data: plotData.col1_values.map((v, i) => [v, plotData.col2_values[i]]),
-        }],
+        hint: "Scatter with text columns: category axes (works for product vs region).",
+        option: {
+          title: { text: `${plotData.col1_name} vs ${plotData.col2_name}` },
+          tooltip: {
+            trigger: "item",
+            formatter: (p: { value?: unknown }) => {
+              const val = p.value;
+              if (!Array.isArray(val) || val.length < 2) return "";
+              return `${val[0]} → ${val[1]}`;
+            },
+          },
+          grid: { left: 100, right: 24, top: 56, bottom: 90 },
+          xAxis: {
+            type: "category",
+            data: uniqX,
+            name: plotData.col1_name,
+            axisLabel: { rotate: 35 },
+          },
+          yAxis: {
+            type: "category",
+            data: uniqY,
+            name: plotData.col2_name,
+          },
+          series: [{
+            type: "scatter",
+            symbolSize: 14,
+            data: xCats.map((x, i) => [x, yCats[i]]),
+          }],
+        },
       };
     }
 
-    // Line and Bar — col1 as category axis, col2 as value
+    if (yHasNum) {
+      return {
+        hint: `${chartType === "bar" ? "Bar" : "Line"}: categories on X, numeric values on Y.`,
+        option: {
+          title: { text: `${plotData.col2_name} by ${plotData.col1_name}` },
+          tooltip: { trigger: "axis" },
+          grid: { left: 56, right: 24, top: 56, bottom: 90 },
+          xAxis: {
+            type: "category",
+            data: xRaw.map((v) => (v == null ? "—" : String(v))),
+            name: plotData.col1_name,
+            axisLabel: { rotate: 35 },
+          },
+          yAxis: { type: "value", name: plotData.col2_name },
+          series: [{
+            type: chartType,
+            data: yRaw.map((v) => (isNumericValue(v) ? toNumber(v) : null)),
+            name: plotData.col2_name,
+          }],
+        },
+      };
+    }
+
+    if (xHasNum && xNumeric) {
+      return {
+        hint: "Y was text — swapped axes so the numeric column is on Y.",
+        option: {
+          title: { text: `${plotData.col1_name} by ${plotData.col2_name}` },
+          tooltip: { trigger: "axis" },
+          grid: { left: 56, right: 24, top: 56, bottom: 90 },
+          xAxis: {
+            type: "category",
+            data: yRaw.map((v) => (v == null ? "—" : String(v))),
+            name: plotData.col2_name,
+            axisLabel: { rotate: 35 },
+          },
+          yAxis: { type: "value", name: plotData.col1_name },
+          series: [{
+            type: chartType,
+            data: xRaw.map((v) => (isNumericValue(v) ? toNumber(v) : null)),
+            name: plotData.col1_name,
+          }],
+        },
+      };
+    }
+
+    const counts = new Map<string, number>();
+    for (const v of xRaw) {
+      const key = v == null ? "—" : String(v);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const labels = [...counts.keys()];
+    const values = labels.map((k) => counts.get(k)!);
     return {
-      title: { text: `${plotData.col2_name} by ${plotData.col1_name}` },
-      tooltip: { trigger: "axis" },
-      xAxis: {
-        type: "category",
-        data: plotData.col1_values.map(String),
-        name: plotData.col1_name,
-        axisLabel: { rotate: 45 },
+      hint:
+        `Both columns are text. Showing counts per “${plotData.col1_name}”. ` +
+        `Tip: set Y to price/quantity/revenue, or use Scatter for product × region.`,
+      option: {
+        title: { text: `Count by ${plotData.col1_name}` },
+        tooltip: { trigger: "axis" },
+        grid: { left: 56, right: 24, top: 56, bottom: 90 },
+        xAxis: {
+          type: "category",
+          data: labels,
+          name: plotData.col1_name,
+          axisLabel: { rotate: 35 },
+        },
+        yAxis: { type: "value", name: "count" },
+        series: [{
+          type: chartType === "line" ? "line" : "bar",
+          data: values,
+          name: "count",
+        }],
       },
-      yAxis: { type: "value", name: plotData.col2_name },
-      series: [{
-        type: chartType,
-        data: plotData.col2_values,
-        name: plotData.col2_name,
-      }],
     };
-  };
+  }, [plotData, chartType]);
 
   return (
     <div>
       <Navbar />
       <main className="page-content">
-        <h1>Analytics & Visualization</h1>
+        <header className="page-header">
+          <h1>Analytics & Visualization</h1>
+          <p className="page-lead">
+            Compute min / max / sum on numeric columns, then plot two columns with Apache ECharts.
+            Scatter works for text×text (e.g. product vs region). Bar/line prefer a numeric Y column.
+          </p>
+        </header>
 
-        {/* Shared dataset picker */}
         <section className="dataset-picker">
+          <h2>1. Choose a dataset</h2>
+          <p className="section-desc">Select one of your uploaded datasets to analyze.</p>
           <div className="form-group">
-            <label>Dataset</label>
-            <select onChange={(e) => handleDatasetChange(e.target.value)} defaultValue="">
+            <label htmlFor="plot-dataset">Dataset</label>
+            <select
+              id="plot-dataset"
+              onChange={(e) => handleDatasetChange(e.target.value)}
+              defaultValue=""
+            >
               <option value="">Select dataset</option>
               {datasets.map((ds) => (
                 <option key={ds.id} value={ds.id}>{ds.name}</option>
               ))}
             </select>
           </div>
+          {datasets.length === 0 && (
+            <p className="empty-hint">No datasets yet — upload one on the Data page first.</p>
+          )}
         </section>
 
         {selectedDataset && (
           <>
-            {/* Section 1: Compute statistic (Screen 3 requirement) */}
             <section className="compute-section">
-              <h2>Compute Statistic</h2>
+              <h2>2. Compute a statistic</h2>
+              <p className="section-desc">
+                Runs on the full column in the database. Non-numeric columns return a clear error;
+                all-null columns return a message instead of a number.
+              </p>
               <div className="compute-form">
-                <select value={computeCol} onChange={(e) => setComputeCol(e.target.value)}>
-                  <option value="">Select column</option>
-                  {selectedDataset.column_names.map((col) => (
-                    <option key={col} value={col}>{col}</option>
-                  ))}
-                </select>
-                <select
-                  value={computeOp}
-                  onChange={(e) => setComputeOp(e.target.value as "min" | "max" | "sum")}
-                >
-                  <option value="min">Min</option>
-                  <option value="max">Max</option>
-                  <option value="sum">Sum</option>
-                </select>
-                <button onClick={handleCompute} disabled={!computeCol}>
+                <div className="form-group">
+                  <label>Column</label>
+                  <select value={computeCol} onChange={(e) => setComputeCol(e.target.value)}>
+                    <option value="">Select column</option>
+                    {selectedDataset.column_names.map((col) => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Operation</label>
+                  <select
+                    value={computeOp}
+                    onChange={(e) => setComputeOp(e.target.value as "min" | "max" | "sum")}
+                  >
+                    <option value="min">Min</option>
+                    <option value="max">Max</option>
+                    <option value="sum">Sum</option>
+                  </select>
+                </div>
+                <button type="button" onClick={handleCompute} disabled={!computeCol}>
                   Compute
                 </button>
               </div>
@@ -160,9 +303,12 @@ export default function PlotPage() {
               )}
             </section>
 
-            {/* Section 2: Plot two columns (Screen 3 requirement) */}
             <section className="plot-config">
-              <h2>Configure Chart</h2>
+              <h2>3. Configure chart</h2>
+              <p className="section-desc">
+                Loads the first ~30 rows. Try <strong>product × price</strong> (bar) or{" "}
+                <strong>product × region</strong> (scatter).
+              </p>
 
               <div className="plot-form">
                 <div className="form-group">
@@ -186,15 +332,15 @@ export default function PlotPage() {
                 </div>
 
                 <div className="form-group">
-                  <label>Chart Type</label>
+                  <label>Chart type</label>
                   <select value={chartType} onChange={(e) => setChartType(e.target.value as ChartType)}>
-                    <option value="scatter">Scatter</option>
-                    <option value="line">Line</option>
                     <option value="bar">Bar</option>
+                    <option value="line">Line</option>
+                    <option value="scatter">Scatter</option>
                   </select>
                 </div>
 
-                <button onClick={handlePlot} disabled={!col1 || !col2}>
+                <button type="button" onClick={handlePlot} disabled={!col1 || !col2}>
                   Generate Chart
                 </button>
               </div>
@@ -202,12 +348,15 @@ export default function PlotPage() {
               {plotError && <p className="error">{plotError}</p>}
             </section>
 
-            {/* Chart Display */}
             {plotData && (
               <section className="chart-section">
+                <h2>Chart</h2>
+                {hint && <p className="chart-hint">{hint}</p>}
                 <ReactECharts
-                  option={getChartOption()}
-                  style={{ height: "400px", width: "100%" }}
+                  option={option}
+                  style={{ height: "420px", width: "100%" }}
+                  notMerge
+                  lazyUpdate
                 />
               </section>
             )}

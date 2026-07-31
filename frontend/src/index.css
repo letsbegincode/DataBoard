@@ -175,8 +175,49 @@ label {
   padding: 1.75rem 1.25rem 3rem;
 }
 
+.page-header {
+  margin-bottom: 0.5rem;
+}
+
+.page-header h1,
 .page-content > h1 {
   margin-bottom: 0.35rem;
+}
+
+.page-lead,
+.section-desc,
+.login-lead {
+  color: var(--muted);
+  max-width: 62ch;
+  margin: 0 0 1rem;
+}
+
+.section-desc {
+  font-size: 0.95rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+
+.empty-hint {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.empty-hint code,
+.section-desc code,
+.page-lead code,
+.card code {
+  font-size: 0.85em;
+  background: #eef2f6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
 }
 
 section {
@@ -189,8 +230,12 @@ section {
 }
 
 section h2 {
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
+  margin-bottom: 0.35rem;
+  font-size: 1.15rem;
+}
+
+section h3 {
+  font-size: 1.05rem;
 }
 
 /* ---------- Login ---------- */
@@ -287,6 +332,38 @@ section h2 {
   grid-template-columns: 1fr 1fr auto;
   gap: 0.75rem;
   align-items: end;
+}
+
+.upload-section .form-group {
+  margin-bottom: 0;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.preview-header h2 {
+  margin-bottom: 0.25rem;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #eef2f6;
 }
 
 @media (max-width: 720px) {
@@ -420,7 +497,173 @@ tbody tr:hover {
 }
 
 .chart-section {
-  padding: 0.5rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.chart-hint {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: #fff8e8;
+  border: 1px solid #f5d78e;
+  border-radius: var(--radius);
+  color: #6b5200;
+  font-size: 0.92rem;
+}
+
+/* ---------- Home / mission / flow ---------- */
+
+.hero-header {
+  padding: 1.5rem 0 0.5rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.btn-primary-link,
+.btn-secondary-link {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+.btn-primary-link {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary-link:hover {
+  background: var(--accent-hover);
+}
+
+.btn-secondary-link {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary-link:hover {
+  background: #eef2f6;
+}
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.card-link {
+  display: block;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.card-link:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.flow-diagram {
+  margin-top: 1rem;
+}
+
+.flow-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.flow-node {
+  flex: 1 1 160px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  min-width: 140px;
+}
+
+.flow-node.frontend {
+  border-top: 3px solid #2b6cb0;
+}
+
+.flow-node.backend {
+  border-top: 3px solid var(--accent);
+}
+
+.flow-node.db {
+  border-top: 3px solid #b7791f;
+}
+
+.flow-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.flow-node strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.flow-node small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.flow-arrow {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.flow-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+
+.flow-steps li {
+  margin-bottom: 0.65rem;
+}
+
+.flow-steps strong {
+  color: var(--text);
+}
+
+.login-card .eyebrow {
+  text-align: center;
+}
+
+.login-card h1 {
+  margin-bottom: 0.5rem;
+}
+
+.login-lead {
+  text-align: center;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 720px) {
+  .upload-section form {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-arrow {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 @media (max-width: 640px) {

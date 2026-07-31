@@ -12,8 +12,8 @@ export default function DataPage() {
   const [datasets, setDatasets] = useState<DatasetListResponse | null>(null);
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState<DatasetPreview | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(true);
 
-  // Upload form state
   const [file, setFile] = useState<File | null>(null);
   const [datasetName, setDatasetName] = useState("");
   const [uploadError, setUploadError] = useState("");
@@ -49,6 +49,7 @@ export default function DataPage() {
   const handlePreview = async (datasetId: number) => {
     const data = await getDatasetPreview(datasetId);
     setPreview(data);
+    setPreviewOpen(true);
   };
 
   const handleDelete = async (dataset: Dataset) => {
@@ -62,25 +63,42 @@ export default function DataPage() {
     <div>
       <Navbar />
       <main className="page-content">
-        <h1>Data Management</h1>
+        <header className="page-header">
+          <h1>Data Management</h1>
+          <p className="page-lead">
+            Upload CSV files, browse your library, preview the first 25 rows, and remove
+            datasets you no longer need. Each upload is stored privately under your account.
+          </p>
+        </header>
 
-        {/* Upload Section */}
         <section className="upload-section">
           <h2>Upload Dataset</h2>
+          <p className="section-desc">
+            Choose a friendly name and a <strong>.csv</strong> file. Columns can be text or
+            numbers — null cells are preserved for compute edge cases.
+          </p>
           <form onSubmit={handleUpload}>
-            <input
-              type="text"
-              placeholder="Dataset name"
-              value={datasetName}
-              onChange={(e) => setDatasetName(e.target.value)}
-              required
-            />
-            <input
-              type="file"
-              accept=".csv"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              required
-            />
+            <div className="form-group">
+              <label htmlFor="dataset-name">Dataset name</label>
+              <input
+                id="dataset-name"
+                type="text"
+                placeholder="e.g. Retail Q1"
+                value={datasetName}
+                onChange={(e) => setDatasetName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="dataset-file">CSV file</label>
+              <input
+                id="dataset-file"
+                type="file"
+                accept=".csv"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                required
+              />
+            </div>
             <button type="submit" disabled={loading}>
               {loading ? "Uploading..." : "Upload CSV"}
             </button>
@@ -88,59 +106,96 @@ export default function DataPage() {
           {uploadError && <p className="error">{uploadError}</p>}
         </section>
 
-        {/* Dataset List Section */}
         <section className="dataset-list-section">
           <h2>Your Datasets</h2>
-          {datasets && datasets.items.length === 0 && <p>No datasets yet. Upload one above.</p>}
+          <p className="section-desc">
+            Paginated list of datasets you own. Use Preview to inspect raw rows, or Delete to
+            permanently remove the dataset and all stored rows.
+          </p>
+          {datasets && datasets.items.length === 0 && (
+            <p className="empty-hint">No datasets yet. Upload a sample from <code>sample_data/</code>.</p>
+          )}
           {datasets && datasets.items.map((ds) => (
             <div key={ds.id} className="dataset-item">
               <div>
                 <strong>{ds.name}</strong> ({ds.original_filename})
-                <span className="dataset-meta"> — {ds.row_count} rows, {ds.column_names.length} columns</span>
+                <span className="dataset-meta">
+                  {" "}— {ds.row_count} rows, {ds.column_names.length} columns
+                </span>
               </div>
               <div>
-                <button onClick={() => handlePreview(ds.id)}>Preview</button>
-                <button className="delete-btn" onClick={() => handleDelete(ds)}>Delete</button>
+                <button type="button" onClick={() => handlePreview(ds.id)}>Preview</button>
+                <button type="button" className="delete-btn" onClick={() => handleDelete(ds)}>
+                  Delete
+                </button>
               </div>
             </div>
           ))}
 
-          {/* Pagination */}
           {datasets && datasets.pages > 1 && (
             <div className="pagination">
-              <button disabled={!datasets.has_prev} onClick={() => setPage(page - 1)}>Previous</button>
-              <span>Page {datasets.page} of {datasets.pages} ({datasets.total} total)</span>
-              <button disabled={!datasets.has_next} onClick={() => setPage(page + 1)}>Next</button>
+              <button type="button" disabled={!datasets.has_prev} onClick={() => setPage(page - 1)}>
+                Previous
+              </button>
+              <span>
+                Page {datasets.page} of {datasets.pages} ({datasets.total} total)
+              </span>
+              <button type="button" disabled={!datasets.has_next} onClick={() => setPage(page + 1)}>
+                Next
+              </button>
             </div>
           )}
         </section>
 
-        {/* Preview Section */}
         {preview && (
           <section className="preview-section">
-            <h2>Preview: {preview.name}</h2>
-            <p>Showing {preview.preview_rows} of {preview.total_rows} rows</p>
+            <div className="preview-header">
+              <div>
+                <h2>Preview: {preview.name}</h2>
+                <p className="section-desc">
+                  Showing first {preview.preview_rows} of {preview.total_rows} rows (API limit: 25).
+                </p>
+              </div>
+              <div className="preview-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setPreviewOpen((open) => !open)}
+                >
+                  {previewOpen ? "Hide preview" : "Show preview"}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setPreview(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
 
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    {preview.column_names.map((col) => (
-                      <th key={col}>{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.rows.map((row, i) => (
-                    <tr key={i}>
+            {previewOpen && (
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
                       {preview.column_names.map((col) => (
-                        <td key={col}>{row[col] != null ? String(row[col]) : "—"}</td>
+                        <th key={col}>{col}</th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {preview.rows.map((row, i) => (
+                      <tr key={i}>
+                        {preview.column_names.map((col) => (
+                          <td key={col}>{row[col] != null ? String(row[col]) : "—"}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         )}
       </main>
