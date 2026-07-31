@@ -16,21 +16,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is logged in on mount
+  // Restore session on mount: access JWT may be expired; interceptor + refresh cookie handle that
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    if (token) {
-      client
-        .get("/auth/me")
-        .then((res) => setUser(res.data))
-        .catch(() => {
-          localStorage.removeItem("access_token");
-          setUser(null);
-        })
-        .finally(() => setIsLoading(false));
-    } else {
+    if (!token) {
       setIsLoading(false);
+      return;
     }
+
+    let cancelled = false;
+    client
+      .get("/auth/me")
+      .then((res) => {
+        if (!cancelled) setUser(res.data);
+      })
+      .catch(() => {
+        // Only clear if refresh also failed (interceptor already removed token / redirected)
+        if (!cancelled && !localStorage.getItem("access_token")) {
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = async (email: string, password: string) => {

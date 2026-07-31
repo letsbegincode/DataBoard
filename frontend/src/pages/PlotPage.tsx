@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import Navbar from "../components/Navbar";
+import InfoCard from "../components/InfoCard";
 import { Dataset, PlotData, ComputeResponse } from "../types";
 import { listDatasets, getPlotData, computeStatistic } from "../api/datasets";
 
@@ -223,20 +224,22 @@ export default function PlotPage() {
   }, [plotData, chartType]);
 
   return (
-    <div>
+    <div className="page-shell">
       <Navbar />
       <main className="page-content">
-        <header className="page-header">
+        <header className="page-header panel-header">
           <h1>Analytics & Visualization</h1>
-          <p className="page-lead">
+        </header>
+
+        <InfoCard title="About this page" defaultOpen={false}>
+          <p>
             Compute min / max / sum on numeric columns, then plot two columns with Apache ECharts.
             Scatter works for text×text (e.g. product vs region). Bar/line prefer a numeric Y column.
           </p>
-        </header>
+        </InfoCard>
 
-        <section className="dataset-picker">
+        <section className="dataset-picker surface-panel">
           <h2>1. Choose a dataset</h2>
-          <p className="section-desc">Select one of your uploaded datasets to analyze.</p>
           <div className="form-group">
             <label htmlFor="plot-dataset">Dataset</label>
             <select
@@ -257,12 +260,14 @@ export default function PlotPage() {
 
         {selectedDataset && (
           <>
-            <section className="compute-section">
+            <section className="compute-section surface-panel">
               <h2>2. Compute a statistic</h2>
-              <p className="section-desc">
-                Runs on the full column in the database. Non-numeric columns return a clear error;
-                all-null columns return a message instead of a number.
-              </p>
+              <InfoCard title="How compute works" defaultOpen={false} className="info-card--nested">
+                <p>
+                  Runs on the full column in the database. Non-numeric columns return a clear error;
+                  all-null columns return a message instead of a number.
+                </p>
+              </InfoCard>
               <div className="compute-form">
                 <div className="form-group">
                   <label>Column</label>
@@ -303,12 +308,14 @@ export default function PlotPage() {
               )}
             </section>
 
-            <section className="plot-config">
+            <section className="plot-config surface-panel">
               <h2>3. Configure chart</h2>
-              <p className="section-desc">
-                Loads the first ~30 rows. Try <strong>product × price</strong> (bar) or{" "}
-                <strong>product × region</strong> (scatter).
-              </p>
+              <InfoCard title="Chart tips" defaultOpen={false} className="info-card--nested">
+                <p>
+                  Loads the first ~30 rows. Try <strong>product × price</strong> (bar) or{" "}
+                  <strong>product × region</strong> (scatter).
+                </p>
+              </InfoCard>
 
               <div className="plot-form">
                 <div className="form-group">
@@ -349,7 +356,7 @@ export default function PlotPage() {
             </section>
 
             {plotData && (
-              <section className="chart-section">
+              <section className="chart-section surface-panel">
                 <h2>Chart</h2>
                 {hint && <p className="chart-hint">{hint}</p>}
                 <ReactECharts

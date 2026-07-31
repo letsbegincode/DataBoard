@@ -1,102 +1,107 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import InfoCard from "../components/InfoCard";
 import { useAuth } from "../context/AuthContext";
 
 export default function HomePage() {
   const { user } = useAuth();
 
   return (
-    <div>
+    <div className="page-shell home-shell">
       <Navbar />
-      <main className="page-content">
-        <header className="page-header hero-header">
-          <p className="eyebrow">xVector Labs take-home · DataBoard</p>
+      <main className="page-content page-content--centered">
+        <header className="hero-panel">
+          <p className="eyebrow">xVector Labs · DataBoard</p>
           <h1>Turn CSV uploads into insight</h1>
-          <p className="page-lead">
-            Hello{user?.email ? `, ${user.email}` : ""}. DataBoard is a small full-stack lab for
-            authenticating users, storing tabular data in PostgreSQL, computing column statistics,
-            and charting results with Apache ECharts — the same shape of work you would scale later.
+          <p className="page-lead page-lead--centered">
+            Hello{user?.email ? `, ${user.email}` : ""}. Upload your datasets, run clear statistics,
+            and explore charts in a private workspace built for everyday data work.
           </p>
-          <div className="hero-actions">
+          <div className="hero-actions hero-actions--centered">
             <Link className="btn-primary-link" to="/data">Go to Data</Link>
             <Link className="btn-secondary-link" to="/plot">Open Analytics</Link>
           </div>
         </header>
 
-        <section className="mission-section">
-          <h2>Mission</h2>
-          <p className="section-desc">
-            Give every authenticated user a private workspace to upload CSVs, preview raw rows,
-            run min/max/sum safely on numeric columns (including empty / all-null / non-numeric
-            edge cases), and visualize relationships without leaving the browser.
+        <InfoCard title="Mission" defaultOpen>
+          <p>
+            Give every signed-in user a private place to upload CSVs, preview rows, compute
+            min / max / sum on numeric columns, and chart relationships — without leaving the browser.
           </p>
           <div className="mission-grid">
-            <div className="card">
-              <h3>Secure by default</h3>
-              <p>argon2 passwords, short-lived JWT access tokens, HttpOnly refresh cookies.</p>
+            <div className="mini-card">
+              <h3>Private & secure</h3>
+              <p>Your datasets stay under your account, protected by hashed passwords and short-lived sessions.</p>
             </div>
-            <div className="card">
-              <h3>Honest analytics</h3>
-              <p>Compute and plot APIs document failures clearly instead of returning silent blanks.</p>
+            <div className="mini-card">
+              <h3>Clear results</h3>
+              <p>When a column can’t be computed or a chart isn’t ready, you get a plain message — not a blank screen.</p>
             </div>
-            <div className="card">
-              <h3>Interview-ready craft</h3>
-              <p>Clean FastAPI modules, genuine pagination, and pytest coverage on compute edges.</p>
+            <div className="mini-card">
+              <h3>Simple workflow</h3>
+              <p>Upload on Data, analyze on Plot — preview, paginate, and delete whenever you need.</p>
             </div>
           </div>
-        </section>
+        </InfoCard>
 
-        <section className="flow-section">
-          <h2>How the system works</h2>
-          <p className="section-desc">
-            One view of the request path from UI → API → Neon Postgres and back.
+        <InfoCard title="How the system works" defaultOpen>
+          <p className="info-intro info-intro--center">
+            Browser never talks to the database — only to the API.
           </p>
 
-          <div className="flow-diagram" aria-label="Backend and frontend flow">
-            <div className="flow-row">
-              <div className="flow-node frontend">
-                <span className="flow-label">Frontend</span>
-                <strong>React + Vite</strong>
-                <small>Login · Data · Plot</small>
+          <div className="flow-diagram" aria-label="Correct request and response path">
+            <div className="flow-chain">
+              <div className="flow-node flow-node--fe">
+                <strong>React</strong>
+                <span>Frontend</span>
               </div>
-              <div className="flow-arrow">JWT + cookies</div>
-              <div className="flow-node backend">
-                <span className="flow-label">Backend</span>
+
+              <div className="flow-hop" aria-hidden>
+                <span className="flow-hop-line flow-hop-line--req" />
+                <span className="flow-hop-label">HTTP + JWT</span>
+                <span className="flow-hop-line flow-hop-line--res" />
+              </div>
+
+              <div className="flow-node flow-node--api">
                 <strong>FastAPI</strong>
-                <small>/auth · /dataset · compute · plot</small>
+                <span>Backend</span>
               </div>
-              <div className="flow-arrow">SQLAlchemy</div>
-              <div className="flow-node db">
-                <span className="flow-label">Database</span>
-                <strong>Neon Postgres</strong>
-                <small>users · datasets · data_rows</small>
+
+              <div className="flow-hop" aria-hidden>
+                <span className="flow-hop-line flow-hop-line--req" />
+                <span className="flow-hop-label">SQLAlchemy</span>
+                <span className="flow-hop-line flow-hop-line--res" />
+              </div>
+
+              <div className="flow-node flow-node--db">
+                <strong>Neon</strong>
+                <span>Postgres</span>
               </div>
             </div>
 
             <ol className="flow-steps">
               <li>
-                <strong>Auth</strong> — register/login issues access JWT (body) + refresh JWT (HttpOnly cookie).
-                Axios retries once via <code>POST /auth/refresh</code> on 401.
+                <strong>1. Request</strong> — UI calls FastAPI (<code>/auth</code>, <code>/dataset</code>, compute, plot).
               </li>
               <li>
-                <strong>Upload</strong> — multipart CSV → pandas parse → dataset metadata + JSON rows in Postgres.
+                <strong>2. Persist / query</strong> — FastAPI reads or writes Neon Postgres.
               </li>
               <li>
-                <strong>Preview / delete</strong> — first 25 rows for the table UI; delete cascades all rows.
-              </li>
-              <li>
-                <strong>Compute</strong> — pull column values, coerce to float, return min/max/sum or edge messages.
-              </li>
-              <li>
-                <strong>Plot</strong> — fetch ~30 values for two columns; ECharts renders bar/line/scatter
-                (including text×text scatter).
+                <strong>3. Response</strong> — Neon → FastAPI → JSON back to the UI. No DB ↔ browser link.
               </li>
             </ol>
-          </div>
-        </section>
 
-        <section className="home-cards-section">
-          <h2>Where to go next</h2>
+            <div className="flow-chips" aria-label="Main actions">
+              <span className="flow-chip">Auth</span>
+              <span className="flow-chip">Upload</span>
+              <span className="flow-chip">Preview</span>
+              <span className="flow-chip">Compute</span>
+              <span className="flow-chip">Plot</span>
+            </div>
+          </div>
+        </InfoCard>
+
+        <InfoCard title="Where to go next" defaultOpen>
           <div className="home-cards">
             <Link to="/data" className="card card-link">
               <h3>Data</h3>
@@ -107,7 +112,7 @@ export default function HomePage() {
               <p>Compute statistics and build interactive charts from your datasets.</p>
             </Link>
           </div>
-        </section>
+        </InfoCard>
       </main>
     </div>
   );

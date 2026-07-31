@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
+import InfoCard from "../components/InfoCard";
 import { Dataset, DatasetListResponse, DatasetPreview } from "../types";
 import {
   uploadDataset,
@@ -17,7 +18,9 @@ export default function DataPage() {
   const [file, setFile] = useState<File | null>(null);
   const [datasetName, setDatasetName] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const [listError, setListError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchDatasets = async () => {
     const data = await listDatasets(page, 5);
@@ -25,7 +28,9 @@ export default function DataPage() {
   };
 
   useEffect(() => {
-    fetchDatasets();
+    fetchDatasets().catch(() => {
+      setListError("Could not load datasets. Try refreshing.");
+    });
   }, [page]);
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -37,7 +42,7 @@ export default function DataPage() {
       await uploadDataset(file, datasetName);
       setFile(null);
       setDatasetName("");
-      fetchDatasets();
+      await fetchDatasets();
     } catch (err: any) {
       const detail = err.response?.data?.detail;
       setUploadError(typeof detail === "string" ? detail : "Upload failed");
@@ -52,31 +57,76 @@ export default function DataPage() {
     setPreviewOpen(true);
   };
 
+  const removeDatasetFromList = (datasetId: number) => {
+    setPreview((prev) => (prev?.dataset_id === datasetId ? null : prev));
+
+    if (!datasets) return;
+
+    const items = datasets.items.filter((d) => d.id !== datasetId);
+    const total = Math.max(0, datasets.total - 1);
+    const pages = Math.max(1, Math.ceil(total / datasets.limit) || 1);
+
+    if (items.length === 0 && datasets.page > 1) {
+      setPage(datasets.page - 1);
+      return;
+    }
+
+    setDatasets({
+      ...datasets,
+      items,
+      total,
+      pages,
+      has_next: datasets.page < pages,
+      has_prev: datasets.page > 1,
+    });
+  };
+
   const handleDelete = async (dataset: Dataset) => {
     if (!window.confirm(`Delete dataset "${dataset.name}"? This cannot be undone.`)) return;
-    await deleteDataset(dataset.id);
-    setPreview(null);
-    fetchDatasets();
+
+    setListError("");
+    setDeletingId(dataset.id);
+    try {
+      await deleteDataset(dataset.id);
+      // Update UI immediately — a refetch can briefly return stale rows (e.g. Neon pool lag)
+      removeDatasetFromList(dataset.id);
+    } catch (err: any) {
+      // Already deleted on server; still drop from the list
+      if (err.response?.status === 404) {
+        removeDatasetFromList(dataset.id);
+      } else {
+        const detail = err.response?.data?.detail;
+        setListError(typeof detail === "string" ? detail : "Delete failed. Try again.");
+      }
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
-    <div>
+    <div className="page-shell">
       <Navbar />
       <main className="page-content">
-        <header className="page-header">
+        <header className="page-header panel-header">
           <h1>Data Management</h1>
-          <p className="page-lead">
-            Upload CSV files, browse your library, preview the first 25 rows, and remove
-            datasets you no longer need. Each upload is stored privately under your account.
-          </p>
         </header>
 
-        <section className="upload-section">
-          <h2>Upload Dataset</h2>
-          <p className="section-desc">
-            Choose a friendly name and a <strong>.csv</strong> file. Columns can be text or
-            numbers — null cells are preserved for compute edge cases.
+        <InfoCard title="About this page" defaultOpen={false}>
+          <p>
+            Upload CSV files, browse your library, preview the first 25 rows, and remove datasets
+            you no longer need. Each upload is stored privately under your account in Neon Postgres.
           </p>
+        </InfoCard>
+
+        <section className="upload-section surface-panel">
+          <h2>Upload Dataset</h2>
+          <InfoCard title="Upload tips" defaultOpen={false} className="info-card--nested">
+            <p>
+              Choose a friendly name and a <strong>.csv</strong> file. Columns can be text or
+              numbers — null cells are preserved for compute edge cases. Try files in{" "}
+              <code>sample_data/</code>.
+            </p>
+          </InfoCard>
           <form onSubmit={handleUpload}>
             <div className="form-group">
               <label htmlFor="dataset-name">Dataset name</label>
@@ -106,12 +156,15 @@ export default function DataPage() {
           {uploadError && <p className="error">{uploadError}</p>}
         </section>
 
-        <section className="dataset-list-section">
+        <section className="dataset-list-section surface-panel">
           <h2>Your Datasets</h2>
-          <p className="section-desc">
-            Paginated list of datasets you own. Use Preview to inspect raw rows, or Delete to
-            permanently remove the dataset and all stored rows.
-          </p>
+          <InfoCard title="List & actions" defaultOpen={false} className="info-card--nested">
+            <p>
+              Paginated list of datasets you own. Use Preview to inspect raw rows, or Delete to
+              permanently remove the dataset and all stored rows (cascade).
+            </p>
+          </InfoCard>
+          {listError && <p className="error">{listError}</p>}
           {datasets && datasets.items.length === 0 && (
             <p className="empty-hint">No datasets yet. Upload a sample from <code>sample_data/</code>.</p>
           )}
@@ -125,8 +178,13 @@ export default function DataPage() {
               </div>
               <div>
                 <button type="button" onClick={() => handlePreview(ds.id)}>Preview</button>
-                <button type="button" className="delete-btn" onClick={() => handleDelete(ds)}>
-                  Delete
+                <button
+                  type="button"
+                  className="delete-btn"
+                  disabled={deletingId === ds.id}
+                  onClick={() => handleDelete(ds)}
+                >
+                  {deletingId === ds.id ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
@@ -148,12 +206,12 @@ export default function DataPage() {
         </section>
 
         {preview && (
-          <section className="preview-section">
+          <section className="preview-section surface-panel">
             <div className="preview-header">
               <div>
                 <h2>Preview: {preview.name}</h2>
                 <p className="section-desc">
-                  Showing first {preview.preview_rows} of {preview.total_rows} rows (API limit: 25).
+                  First {preview.preview_rows} of {preview.total_rows} rows (API limit: 25).
                 </p>
               </div>
               <div className="preview-actions">
@@ -162,7 +220,7 @@ export default function DataPage() {
                   className="btn-secondary"
                   onClick={() => setPreviewOpen((open) => !open)}
                 >
-                  {previewOpen ? "Hide preview" : "Show preview"}
+                  {previewOpen ? "Minimize" : "Expand"}
                 </button>
                 <button
                   type="button"
