@@ -1,6 +1,6 @@
 # DataBoard — Technical Assumptions
 
-Assumptions fill gaps where `ProjectSpec.md` is silent or allows choice. These are intentional product/engineering decisions.
+Assumptions fill gaps where [`assignment/ProjectSpec.md`](./assignment/ProjectSpec.md) is silent or allows choice. These are intentional product/engineering decisions.
 
 ---
 
