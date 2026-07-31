@@ -8,7 +8,7 @@ Optional live hosting for the take-home (not required by the assignment spec).
 |---|---|
 | **API** | https://databoard-f8r1.onrender.com |
 | **API docs** | https://databoard-f8r1.onrender.com/docs |
-| **App (Vercel)** | *(your `*.vercel.app` URL)* |
+| **App (Vercel)** | https://data-board-beta.vercel.app |
 
 > **Why the first request feels slow:** Render’s **free tier** spins down the API after idle time. The next hit can take **~30–50 seconds** (“cold start”) while the instance wakes. After that, responses are normal until it sleeps again. This is a free-tier tradeoff, not an app bug.
 
