@@ -28,3 +28,11 @@ class DatasetPreviewResponse(BaseModel):
     rows: list[dict]
     total_rows: int
     preview_rows: int
+
+class PlotDataResponse(BaseModel):
+    dataset_id: int
+    col1_name: str
+    col2_name: str
+    col1_values: list
+    col2_values: list
+    row_count: int

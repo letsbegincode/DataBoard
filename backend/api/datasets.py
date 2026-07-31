@@ -7,7 +7,7 @@ from core.database import get_db
 from api.deps import get_current_user
 from models.user import User
 from models.dataset import Dataset, DataRow
-from schemas.dataset import DatasetResponse, DatasetListResponse, DatasetPreviewResponse
+from schemas.dataset import DatasetResponse, DatasetListResponse, DatasetPreviewResponse, PlotDataResponse
 
 router = APIRouter(prefix="/dataset", tags=["dataset"])
 
@@ -157,3 +157,47 @@ def delete_dataset(
     db.delete(dataset)
     db.commit()
     return {"message": f"Dataset '{name}' deleted successfully"}
+
+
+@router.get("/{dataset_id}/plot", response_model=PlotDataResponse)
+def get_plot_data(
+    dataset_id: int,
+    col1: str,
+    col2: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    dataset = (
+        db.query(Dataset)
+        .filter(Dataset.id == dataset_id, Dataset.user_id == user.id)
+        .first()
+    )
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    for col_name in [col1, col2]:
+        if col_name not in dataset.column_names:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Column '{col_name}' not found. Available: {dataset.column_names}"
+            )
+
+    rows = (
+        db.query(DataRow)
+        .filter(DataRow.dataset_id == dataset_id)
+        .order_by(DataRow.row_index)
+        .limit(30)
+        .all()
+    )
+
+    col1_values = [row.data.get(col1) for row in rows]
+    col2_values = [row.data.get(col2) for row in rows]
+
+    return PlotDataResponse(
+        dataset_id=dataset_id,
+        col1_name=col1,
+        col2_name=col2,
+        col1_values=col1_values,
+        col2_values=col2_values,
+        row_count=len(rows),
+    )
