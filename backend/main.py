@@ -7,6 +7,7 @@ from models.user import User  # noqa: F401
 from models.dataset import Dataset, DataRow  # noqa: F401
 from api.auth import router as auth_router
 from api.datasets import router as dataset_router
+from api.compute import router as compute_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,6 +28,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(dataset_router)
+app.include_router(compute_router)
 
 @app.get("/health")
 def health_check():
