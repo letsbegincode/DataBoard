@@ -1,4 +1,5 @@
 import io
+import math
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
@@ -6,7 +7,7 @@ from core.database import get_db
 from api.deps import get_current_user
 from models.user import User
 from models.dataset import Dataset, DataRow
-from schemas.dataset import DatasetResponse
+from schemas.dataset import DatasetResponse, DatasetListResponse
 
 router = APIRouter(prefix="/dataset", tags=["dataset"])
 
@@ -52,4 +53,55 @@ def upload_dataset(
     db.commit()
     db.refresh(dataset)
 
+    return dataset
+
+
+@router.get("", response_model=DatasetListResponse)
+def list_datasets(
+    page: int = 1,
+    limit: int = 10,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if page < 1:
+        page = 1
+    if limit < 1 or limit > 100:
+        limit = 10
+
+    total = db.query(Dataset).filter(Dataset.user_id == user.id).count()
+    total_pages = math.ceil(total / limit) if total > 0 else 1
+
+    datasets = (
+        db.query(Dataset)
+        .filter(Dataset.user_id == user.id)
+        .order_by(Dataset.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+
+    return DatasetListResponse(
+        items=datasets,
+        total=total,
+        page=page,
+        limit=limit,
+        pages=total_pages,
+        has_next=page < total_pages,
+        has_prev=page > 1,
+    )
+
+
+@router.get("/{dataset_id}", response_model=DatasetResponse)
+def get_dataset(
+    dataset_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    dataset = (
+        db.query(Dataset)
+        .filter(Dataset.id == dataset_id, Dataset.user_id == user.id)
+        .first()
+    )
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
     return dataset
