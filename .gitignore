@@ -1,0 +1,19 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+test.db
+
+# Env (never commit secrets; keep .env.example)
+.env
+backend/.env
+*.env
+!.env.example
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
