@@ -1,0 +1,101 @@
+product,category,price,quantity,revenue,region,store,rating
+Rice,Groceries,372.07,32.0,11906.24,North,Store D,4.4
+Rice,Groceries,51.38,,0.0,West,Store B,3.4
+Helmet,Sports,142.7,1.0,142.7,East,Store B,3.8
+Jacket,Clothing,55.59,49.0,2723.91,North,Store D,4.2
+Shampoo,Beauty,486.69,49.0,23847.81,East,Store B,4.3
+Rice,Groceries,332.33,38.0,12628.54,West,Store C,4.7
+Gloves,Sports,417.88,21.0,8775.48,North,Store B,3.5
+Lotion,Beauty,126.18,60.0,7570.8,South,Store C,4.3
+Milk,Groceries,411.79,41.0,16883.39,East,Store B,4.8
+Yoga Mat,Sports,442.92,59.0,26132.28,East,Store D,4.5
+Lipstick,Beauty,184.19,18.0,3315.42,North,Store B,3.1
+Sweater,Clothing,213.97,9.0,1925.73,East,Store A,3.9
+Tea,Groceries,442.97,35.0,15503.95,South,Store D,3.6
+Tea,Groceries,438.55,34.0,14910.7,North,Store C,4.0
+Soap,Beauty,103.46,48.0,4966.08,North,Store C,4.6
+Football,Sports,60.37,47.0,2837.39,North,Store B,3.6
+Shampoo,Beauty,47.4,63.0,2986.2,South,Store B,4.1
+Helmet,Sports,86.74,68.0,5898.32,South,Store C,3.4
+Gloves,Sports,326.69,57.0,18621.33,North,Store C,3.5
+Sugar,Groceries,,29.0,0.0,North,Store A,3.1
+Novel,Books,259.51,36.0,9342.36,West,Store B,3.3
+Yoga Mat,Sports,99.25,13.0,1290.25,North,Store A,3.8
+Eggs,Groceries,365.47,14.0,5116.58,West,Store B,3.9
+Magazine,Books,128.65,10.0,1286.5,North,Store A,4.1
+Milk,Groceries,87.32,63.0,5501.16,South,Store D,4.8
+Eggs,Groceries,136.28,59.0,8040.52,West,Store B,4.5
+Jacket,Clothing,112.76,8.0,902.08,North,Store A,4.5
+Lipstick,Beauty,253.91,68.0,17265.88,South,Store A,3.2
+Shampoo,Beauty,339.23,31.0,10516.13,North,Store A,4.1
+Gloves,Sports,293.92,67.0,19692.64,East,Store B,4.3
+Magazine,Books,69.78,39.0,2721.42,North,Store D,4.9
+Soap,Beauty,498.07,10.0,4980.7,East,Store A,3.3
+Jacket,Clothing,146.07,57.0,8325.99,North,Store C,4.2
+Milk,Groceries,135.91,14.0,1902.74,South,Store C,3.6
+Sweater,Clothing,318.95,34.0,10844.3,North,Store A,4.8
+Tennis Ball,Sports,26.82,43.0,1153.26,West,Store D,3.5
+Shampoo,Beauty,60.38,20.0,1207.6,South,Store D,4.2
+T-Shirt,Clothing,157.59,6.0,945.54,North,Store C,3.5
+Lipstick,Beauty,487.05,20.0,9741.0,South,Store D,3.3
+Milk,Groceries,369.6,43.0,15892.8,South,Store C,4.3
+Sweater,Clothing,58.51,5.0,292.55,West,Store C,4.6
+Notebook,Books,115.35,25.0,2883.75,East,Store C,3.1
+Lipstick,Beauty,341.36,,0.0,East,Store B,4.8
+Perfume,Beauty,23.94,56.0,1340.64,North,Store D,3.9
+Face Wash,Beauty,,56.0,0.0,South,Store C,4.1
+Football,Sports,474.69,43.0,20411.67,East,Store C,3.2
+Tennis Ball,Sports,204.19,38.0,7759.22,West,Store B,4.3
+Soap,Beauty,153.97,71.0,10931.87,East,Store D,3.4
+Yoga Mat,Sports,339.44,66.0,22403.04,South,Store A,4.6
+Comics,Books,333.61,43.0,14345.23,East,Store B,3.5
+Jeans,Clothing,17.09,32.0,546.88,West,Store D,4.5
+Face Wash,Beauty,360.58,50.0,18029.0,North,Store A,4.3
+Cricket Bat,Sports,92.06,67.0,6168.02,North,Store D,4.8
+Shoes,Clothing,335.45,72.0,24152.4,West,Store D,4.8
+Sweater,Clothing,431.44,58.0,25023.52,West,Store B,4.3
+Magazine,Books,43.35,37.0,1603.95,North,Store B,4.8
+Jeans,Clothing,194.6,20.0,3892.0,West,Store D,3.8
+Milk,Groceries,417.28,50.0,20864.0,West,Store D,4.4
+Bread,Groceries,152.81,50.0,7640.5,South,Store D,3.8
+Jacket,Clothing,220.74,4.0,882.96,South,Store D,4.6
+Cap,Clothing,269.39,51.0,13738.89,West,Store B,3.2
+Cricket Bat,Sports,29.89,49.0,1464.61,West,Store C,3.7
+Tennis Ball,Sports,,61.0,0.0,East,Store B,5.0
+Tea,Groceries,24.93,4.0,99.72,South,Store B,3.0
+Shoes,Clothing,336.38,73.0,24555.74,East,Store B,3.5
+Soap,Beauty,482.05,15.0,7230.75,North,Store C,3.6
+Lotion,Beauty,454.47,49.0,22269.03,South,Store A,3.2
+Planner,Books,302.2,16.0,4835.2,West,Store C,3.1
+Sugar,Groceries,325.53,2.0,651.06,East,Store D,3.2
+Shoes,Clothing,92.19,67.0,6176.73,West,Store D,4.6
+Gloves,Sports,298.27,42.0,12527.34,West,Store B,3.2
+Helmet,Sports,307.11,49.0,15048.39,West,Store B,3.7
+Dictionary,Books,173.47,36.0,6244.92,South,Store D,3.4
+Helmet,Sports,380.29,61.0,23197.69,North,Store C,4.6
+Shoes,Clothing,347.43,40.0,13897.2,East,Store D,4.1
+Perfume,Beauty,179.15,59.0,10569.85,South,Store C,3.2
+Tea,Groceries,270.25,24.0,6486.0,East,Store A,3.6
+Jacket,Clothing,117.6,23.0,2704.8,North,Store A,3.3
+Perfume,Beauty,350.22,17.0,5953.74,North,Store C,3.2
+Yoga Mat,Sports,223.03,24.0,5352.72,North,Store A,4.7
+Yoga Mat,Sports,41.67,7.0,291.69,North,Store B,4.9
+Sugar,Groceries,383.4,29.0,11118.6,East,Store D,4.8
+Comics,Books,312.41,13.0,4061.33,North,Store B,3.4
+Jeans,Clothing,,21.0,0.0,East,Store A,4.2
+Jacket,Clothing,354.94,59.0,20941.46,South,Store D,3.5
+Sugar,Groceries,116.28,20.0,2325.6,South,Store C,3.1
+Lotion,Beauty,413.0,37.0,15281.0,West,Store C,3.6
+Soap,Beauty,249.43,11.0,2743.73,East,Store A,4.5
+Milk,Groceries,481.15,,0.0,East,Store A,4.5
+Shoes,Clothing,261.89,57.0,14927.73,West,Store A,4.2
+Tennis Ball,Sports,207.13,42.0,8699.46,West,Store C,3.7
+Helmet,Sports,23.17,12.0,278.04,West,Store A,4.9
+Lipstick,Beauty,209.56,25.0,5239.0,West,Store A,4.0
+Jacket,Clothing,276.86,37.0,10243.82,South,Store B,3.2
+Comics,Books,11.77,53.0,623.81,West,Store A,4.8
+Shoes,Clothing,466.66,38.0,17733.08,West,Store B,4.7
+Helmet,Sports,76.6,25.0,1915.0,North,Store C,4.8
+Tennis Ball,Sports,467.45,,0.0,West,Store B,4.5
+Helmet,Sports,244.75,43.0,10524.25,East,Store B,3.9
+Cap,Clothing,,53.0,0.0,West,Store D,4.4
