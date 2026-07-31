@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import InfoCard from "../components/InfoCard";
+import { DatasetListSkeleton, TableSkeleton } from "../components/Skeleton";
 import { Dataset, DatasetListResponse, DatasetPreview } from "../types";
 import {
   uploadDataset,
@@ -14,6 +15,8 @@ export default function DataPage() {
   const [page, setPage] = useState(1);
   const [preview, setPreview] = useState<DatasetPreview | null>(null);
   const [previewOpen, setPreviewOpen] = useState(true);
+  const [listLoading, setListLoading] = useState(true);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [datasetName, setDatasetName] = useState("");
@@ -23,13 +26,20 @@ export default function DataPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchDatasets = async () => {
-    const data = await listDatasets(page, 5);
-    setDatasets(data);
+    setListLoading(true);
+    setListError("");
+    try {
+      const data = await listDatasets(page, 5);
+      setDatasets(data);
+    } finally {
+      setListLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchDatasets().catch(() => {
       setListError("Could not load datasets. Try refreshing.");
+      setListLoading(false);
     });
   }, [page]);
 
@@ -52,9 +62,17 @@ export default function DataPage() {
   };
 
   const handlePreview = async (datasetId: number) => {
-    const data = await getDatasetPreview(datasetId);
-    setPreview(data);
+    setPreviewLoading(true);
     setPreviewOpen(true);
+    setPreview(null);
+    try {
+      const data = await getDatasetPreview(datasetId);
+      setPreview(data);
+    } catch {
+      setListError("Could not load preview. Try again.");
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   const removeDatasetFromList = (datasetId: number) => {
@@ -88,10 +106,8 @@ export default function DataPage() {
     setDeletingId(dataset.id);
     try {
       await deleteDataset(dataset.id);
-      // Update UI immediately — a refetch can briefly return stale rows (e.g. Neon pool lag)
       removeDatasetFromList(dataset.id);
     } catch (err: any) {
-      // Already deleted on server; still drop from the list
       if (err.response?.status === 404) {
         removeDatasetFromList(dataset.id);
       } else {
@@ -114,7 +130,7 @@ export default function DataPage() {
         <InfoCard title="About this page" defaultOpen={false}>
           <p>
             Upload CSV files, browse your library, preview the first 25 rows, and remove datasets
-            you no longer need. Each upload is stored privately under your account in Neon Postgres.
+            you no longer need. Each upload is stored privately under your account.
           </p>
         </InfoCard>
 
@@ -123,8 +139,7 @@ export default function DataPage() {
           <InfoCard title="Upload tips" defaultOpen={false} className="info-card--nested">
             <p>
               Choose a friendly name and a <strong>.csv</strong> file. Columns can be text or
-              numbers — null cells are preserved for compute edge cases. Try files in{" "}
-              <code>sample_data/</code>.
+              numbers. Try files in <code>sample_data/</code>.
             </p>
           </InfoCard>
           <form onSubmit={handleUpload}>
@@ -160,15 +175,16 @@ export default function DataPage() {
           <h2>Your Datasets</h2>
           <InfoCard title="List & actions" defaultOpen={false} className="info-card--nested">
             <p>
-              Paginated list of datasets you own. Use Preview to inspect raw rows, or Delete to
-              permanently remove the dataset and all stored rows (cascade).
+              Browse datasets you own. Use Preview to inspect rows, or Delete to remove a dataset
+              permanently.
             </p>
           </InfoCard>
           {listError && <p className="error">{listError}</p>}
-          {datasets && datasets.items.length === 0 && (
+          {listLoading && <DatasetListSkeleton rows={3} />}
+          {!listLoading && datasets && datasets.items.length === 0 && (
             <p className="empty-hint">No datasets yet. Upload a sample from <code>sample_data/</code>.</p>
           )}
-          {datasets && datasets.items.map((ds) => (
+          {!listLoading && datasets && datasets.items.map((ds) => (
             <div key={ds.id} className="dataset-item">
               <div>
                 <strong>{ds.name}</strong> ({ds.original_filename})
@@ -177,7 +193,13 @@ export default function DataPage() {
                 </span>
               </div>
               <div>
-                <button type="button" onClick={() => handlePreview(ds.id)}>Preview</button>
+                <button
+                  type="button"
+                  onClick={() => handlePreview(ds.id)}
+                  disabled={previewLoading}
+                >
+                  Preview
+                </button>
                 <button
                   type="button"
                   className="delete-btn"
@@ -190,7 +212,7 @@ export default function DataPage() {
             </div>
           ))}
 
-          {datasets && datasets.pages > 1 && (
+          {!listLoading && datasets && datasets.pages > 1 && (
             <div className="pagination">
               <button type="button" disabled={!datasets.has_prev} onClick={() => setPage(page - 1)}>
                 Previous
@@ -205,34 +227,39 @@ export default function DataPage() {
           )}
         </section>
 
-        {preview && (
+        {(previewLoading || preview) && (
           <section className="preview-section surface-panel">
             <div className="preview-header">
               <div>
-                <h2>Preview: {preview.name}</h2>
-                <p className="section-desc">
-                  First {preview.preview_rows} of {preview.total_rows} rows (API limit: 25).
-                </p>
+                <h2>{preview ? `Preview: ${preview.name}` : "Preview"}</h2>
+                {preview && (
+                  <p className="section-desc">
+                    First {preview.preview_rows} of {preview.total_rows} rows (API limit: 25).
+                  </p>
+                )}
               </div>
-              <div className="preview-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setPreviewOpen((open) => !open)}
-                >
-                  {previewOpen ? "Minimize" : "Expand"}
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setPreview(null)}
-                >
-                  Close
-                </button>
-              </div>
+              {preview && (
+                <div className="preview-actions">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setPreviewOpen((open) => !open)}
+                  >
+                    {previewOpen ? "Minimize" : "Expand"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setPreview(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
 
-            {previewOpen && (
+            {previewLoading && <TableSkeleton rows={6} cols={4} />}
+            {!previewLoading && preview && previewOpen && (
               <div className="table-container">
                 <table>
                   <thead>

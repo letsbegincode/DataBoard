@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import Navbar from "../components/Navbar";
 import InfoCard from "../components/InfoCard";
+import { ChartSkeleton, FormFieldSkeleton } from "../components/Skeleton";
 import { Dataset, PlotData, ComputeResponse } from "../types";
 import { listDatasets, getPlotData, computeStatistic } from "../api/datasets";
 
@@ -23,21 +24,27 @@ function toNumber(v: unknown): number {
 
 export default function PlotPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [datasetsLoading, setDatasetsLoading] = useState(true);
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
 
   const [computeCol, setComputeCol] = useState("");
   const [computeOp, setComputeOp] = useState<"min" | "max" | "sum">("sum");
   const [computeResult, setComputeResult] = useState<ComputeResponse | null>(null);
   const [computeError, setComputeError] = useState("");
+  const [computing, setComputing] = useState(false);
 
   const [col1, setCol1] = useState("");
   const [col2, setCol2] = useState("");
   const [chartType, setChartType] = useState<ChartType>("bar");
   const [plotData, setPlotData] = useState<PlotData | null>(null);
   const [plotError, setPlotError] = useState("");
+  const [plotting, setPlotting] = useState(false);
 
   useEffect(() => {
-    listDatasets(1, 100).then((res) => setDatasets(res.items));
+    setDatasetsLoading(true);
+    listDatasets(1, 100)
+      .then((res) => setDatasets(res.items))
+      .finally(() => setDatasetsLoading(false));
   }, []);
 
   const handleDatasetChange = (datasetId: string) => {
@@ -56,6 +63,7 @@ export default function PlotPage() {
     if (!selectedDataset || !computeCol) return;
     setComputeError("");
     setComputeResult(null);
+    setComputing(true);
     try {
       const result = await computeStatistic(selectedDataset.id, {
         column: computeCol,
@@ -65,18 +73,24 @@ export default function PlotPage() {
     } catch (err: any) {
       const detail = err.response?.data?.detail;
       setComputeError(typeof detail === "string" ? detail : "Compute failed");
+    } finally {
+      setComputing(false);
     }
   };
 
   const handlePlot = async () => {
     if (!selectedDataset || !col1 || !col2) return;
     setPlotError("");
+    setPlotting(true);
+    setPlotData(null);
     try {
       const data = await getPlotData(selectedDataset.id, col1, col2);
       setPlotData(data);
     } catch (err: any) {
       const detail = err.response?.data?.detail;
       setPlotError(typeof detail === "string" ? detail : "Failed to get plot data");
+    } finally {
+      setPlotting(false);
     }
   };
 
@@ -240,20 +254,24 @@ export default function PlotPage() {
 
         <section className="dataset-picker surface-panel">
           <h2>1. Choose a dataset</h2>
-          <div className="form-group">
-            <label htmlFor="plot-dataset">Dataset</label>
-            <select
-              id="plot-dataset"
-              onChange={(e) => handleDatasetChange(e.target.value)}
-              defaultValue=""
-            >
-              <option value="">Select dataset</option>
-              {datasets.map((ds) => (
-                <option key={ds.id} value={ds.id}>{ds.name}</option>
-              ))}
-            </select>
-          </div>
-          {datasets.length === 0 && (
+          {datasetsLoading ? (
+            <FormFieldSkeleton />
+          ) : (
+            <div className="form-group">
+              <label htmlFor="plot-dataset">Dataset</label>
+              <select
+                id="plot-dataset"
+                onChange={(e) => handleDatasetChange(e.target.value)}
+                defaultValue=""
+              >
+                <option value="">Select dataset</option>
+                {datasets.map((ds) => (
+                  <option key={ds.id} value={ds.id}>{ds.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {!datasetsLoading && datasets.length === 0 && (
             <p className="empty-hint">No datasets yet — upload one on the Data page first.</p>
           )}
         </section>
@@ -264,8 +282,8 @@ export default function PlotPage() {
               <h2>2. Compute a statistic</h2>
               <InfoCard title="How compute works" defaultOpen={false} className="info-card--nested">
                 <p>
-                  Runs on the full column in the database. Non-numeric columns return a clear error;
-                  all-null columns return a message instead of a number.
+                  Runs on the full column. Non-numeric columns show a clear error; empty or all-null
+                  columns return a message instead of a number.
                 </p>
               </InfoCard>
               <div className="compute-form">
@@ -289,8 +307,12 @@ export default function PlotPage() {
                     <option value="sum">Sum</option>
                   </select>
                 </div>
-                <button type="button" onClick={handleCompute} disabled={!computeCol}>
-                  Compute
+                <button
+                  type="button"
+                  onClick={handleCompute}
+                  disabled={!computeCol || computing}
+                >
+                  {computing ? "Computing..." : "Compute"}
                 </button>
               </div>
               {computeError && <p className="error">{computeError}</p>}
@@ -347,24 +369,33 @@ export default function PlotPage() {
                   </select>
                 </div>
 
-                <button type="button" onClick={handlePlot} disabled={!col1 || !col2}>
-                  Generate Chart
+                <button
+                  type="button"
+                  onClick={handlePlot}
+                  disabled={!col1 || !col2 || plotting}
+                >
+                  {plotting ? "Generating..." : "Generate Chart"}
                 </button>
               </div>
 
               {plotError && <p className="error">{plotError}</p>}
             </section>
 
-            {plotData && (
+            {(plotting || plotData) && (
               <section className="chart-section surface-panel">
                 <h2>Chart</h2>
-                {hint && <p className="chart-hint">{hint}</p>}
-                <ReactECharts
-                  option={option}
-                  style={{ height: "420px", width: "100%" }}
-                  notMerge
-                  lazyUpdate
-                />
+                {plotting && <ChartSkeleton />}
+                {!plotting && plotData && (
+                  <>
+                    {hint && <p className="chart-hint">{hint}</p>}
+                    <ReactECharts
+                      option={option}
+                      style={{ height: "420px", width: "100%" }}
+                      notMerge
+                      lazyUpdate
+                    />
+                  </>
+                )}
               </section>
             )}
           </>

@@ -884,6 +884,141 @@ tbody tr:hover {
   font-size: 0.92rem;
 }
 
+/* ---------- Skeletons ---------- */
+
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    #e4ebe8 0%,
+    #f2f6f4 45%,
+    #e4ebe8 90%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-line {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.skeleton-block {
+  flex-shrink: 0;
+}
+
+.skeleton-mb {
+  margin-bottom: 0.85rem;
+}
+
+.skeleton-mb-sm {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.skeleton-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.95rem 1.6rem;
+  background: var(--nav-bg);
+  box-shadow: 0 8px 24px rgba(15, 39, 64, 0.28);
+}
+
+.skeleton-nav .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.28) 45%,
+    rgba(255, 255, 255, 0.12) 90%
+  );
+  background-size: 200% 100%;
+}
+
+.skeleton-nav-links {
+  display: flex;
+  gap: 1.2rem;
+}
+
+.skeleton-panel {
+  min-height: 4rem;
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.skeleton-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid rgba(201, 212, 222, 0.7);
+}
+
+.skeleton-list-main {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.skeleton-list-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.skeleton-table th,
+.skeleton-table td {
+  background: transparent;
+}
+
+.skeleton-table .skeleton {
+  vertical-align: middle;
+}
+
+.skeleton-chart {
+  height: 420px;
+  display: flex;
+  align-items: flex-end;
+  padding: 1.25rem 0.75rem 0.5rem;
+  border: 1px dashed rgba(201, 212, 222, 0.95);
+  border-radius: var(--radius-sm);
+  background: rgba(247, 250, 249, 0.65);
+}
+
+.skeleton-chart-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.65rem;
+  width: 100%;
+  height: 100%;
+  align-items: end;
+}
+
+.skeleton-chart-bars .skeleton {
+  max-height: 100%;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
 @media (max-width: 720px) {
   .upload-section form {
     grid-template-columns: 1fr;
