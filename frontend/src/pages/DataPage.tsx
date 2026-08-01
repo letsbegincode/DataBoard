@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import InfoCard from "../components/InfoCard";
-import { DatasetListSkeleton, TableSkeleton } from "../components/Skeleton";
+import { DatasetListSkeleton, TableSkeleton, ButtonPending } from "../components/Skeleton";
 import { Dataset, DatasetListResponse, DatasetPreview } from "../types";
 import {
   uploadDataset,
@@ -17,6 +17,7 @@ export default function DataPage() {
   const [previewOpen, setPreviewOpen] = useState(true);
   const [listLoading, setListLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewingId, setPreviewingId] = useState<number | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [datasetName, setDatasetName] = useState("");
@@ -45,7 +46,7 @@ export default function DataPage() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !datasetName) return;
+    if (!file || !datasetName || loading) return;
     setUploadError("");
     setLoading(true);
     try {
@@ -63,6 +64,7 @@ export default function DataPage() {
 
   const handlePreview = async (datasetId: number) => {
     setPreviewLoading(true);
+    setPreviewingId(datasetId);
     setPreviewOpen(true);
     setPreview(null);
     try {
@@ -72,6 +74,7 @@ export default function DataPage() {
       setListError("Could not load preview. Try again.");
     } finally {
       setPreviewLoading(false);
+      setPreviewingId(null);
     }
   };
 
@@ -119,6 +122,8 @@ export default function DataPage() {
     }
   };
 
+  const busy = loading || deletingId !== null || previewLoading;
+
   return (
     <div className="page-shell">
       <Navbar />
@@ -152,6 +157,7 @@ export default function DataPage() {
                 value={datasetName}
                 onChange={(e) => setDatasetName(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="form-group">
@@ -162,11 +168,17 @@ export default function DataPage() {
                 accept=".csv"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 required
+                disabled={loading}
               />
             </div>
-            <button type="submit" disabled={loading}>
-              {loading ? "Uploading..." : "Upload CSV"}
+            <button type="submit" disabled={loading || !file || !datasetName} className="btn-with-pending">
+              {loading ? <ButtonPending label="Uploading…" /> : "Upload CSV"}
             </button>
+            {loading && (
+              <p className="action-status" role="status">
+                Uploading to the API — large files or a cold start can take a moment.
+              </p>
+            )}
           </form>
           {uploadError && <p className="error">{uploadError}</p>}
         </section>
@@ -180,12 +192,17 @@ export default function DataPage() {
             </p>
           </InfoCard>
           {listError && <p className="error">{listError}</p>}
-          {listLoading && <DatasetListSkeleton rows={3} />}
+          {listLoading && !datasets && <DatasetListSkeleton rows={3} />}
+          {listLoading && datasets && (
+            <div className="list-refreshing" aria-busy="true" aria-label="Refreshing datasets">
+              <DatasetListSkeleton rows={Math.min(3, datasets.items.length || 2)} />
+            </div>
+          )}
           {!listLoading && datasets && datasets.items.length === 0 && (
             <p className="empty-hint">No datasets yet. Upload a sample from <code>sample_data/</code>.</p>
           )}
           {!listLoading && datasets && datasets.items.map((ds) => (
-            <div key={ds.id} className="dataset-item">
+            <div key={ds.id} className={`dataset-item${deletingId === ds.id ? " dataset-item--busy" : ""}`}>
               <div>
                 <strong>{ds.name}</strong>
                 <span className="dataset-meta">
@@ -196,17 +213,17 @@ export default function DataPage() {
                 <button
                   type="button"
                   onClick={() => handlePreview(ds.id)}
-                  disabled={previewLoading}
+                  disabled={busy}
                 >
-                  Preview
+                  {previewingId === ds.id ? <ButtonPending label="Loading…" /> : "Preview"}
                 </button>
                 <button
                   type="button"
                   className="delete-btn"
-                  disabled={deletingId === ds.id}
+                  disabled={busy}
                   onClick={() => handleDelete(ds)}
                 >
-                  {deletingId === ds.id ? "Deleting..." : "Delete"}
+                  {deletingId === ds.id ? <ButtonPending label="Deleting…" /> : "Delete"}
                 </button>
               </div>
             </div>
@@ -214,13 +231,13 @@ export default function DataPage() {
 
           {!listLoading && datasets && datasets.pages > 1 && (
             <div className="pagination">
-              <button type="button" disabled={!datasets.has_prev} onClick={() => setPage(page - 1)}>
+              <button type="button" disabled={!datasets.has_prev || busy} onClick={() => setPage(page - 1)}>
                 Previous
               </button>
               <span>
                 Page {datasets.page} of {datasets.pages} ({datasets.total} total)
               </span>
-              <button type="button" disabled={!datasets.has_next} onClick={() => setPage(page + 1)}>
+              <button type="button" disabled={!datasets.has_next || busy} onClick={() => setPage(page + 1)}>
                 Next
               </button>
             </div>
@@ -231,14 +248,14 @@ export default function DataPage() {
           <section className="preview-section surface-panel">
             <div className="preview-header">
               <div>
-                <h2>{preview ? `Preview: ${preview.name}` : "Preview"}</h2>
+                <h2>{preview ? `Preview: ${preview.name}` : "Loading preview…"}</h2>
                 {preview && (
                   <p className="section-desc">
                     First {preview.preview_rows} of {preview.total_rows} rows (API limit: 25).
                   </p>
                 )}
               </div>
-              {preview && (
+              {preview && !previewLoading && (
                 <div className="preview-actions">
                   <button
                     type="button"

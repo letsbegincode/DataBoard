@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import Navbar from "../components/Navbar";
 import InfoCard from "../components/InfoCard";
-import { ChartSkeleton, FormFieldSkeleton } from "../components/Skeleton";
+import { ChartSkeleton, FormFieldSkeleton, ComputeResultSkeleton, ButtonPending } from "../components/Skeleton";
 import { Dataset, PlotData, ComputeResponse } from "../types";
 import { listDatasets, getPlotData, computeStatistic } from "../api/datasets";
 import { buildChartOption, type ChartType } from "../lib/chartBuilder";
@@ -137,7 +137,11 @@ export default function PlotPage() {
               <div className="compute-form">
                 <div className="form-group">
                   <label>Column</label>
-                  <select value={computeCol} onChange={(e) => setComputeCol(e.target.value)}>
+                  <select
+                    value={computeCol}
+                    onChange={(e) => setComputeCol(e.target.value)}
+                    disabled={computing}
+                  >
                     <option value="">Select column</option>
                     {selectedDataset.column_names.map((col) => (
                       <option key={col} value={col}>{col}</option>
@@ -149,6 +153,7 @@ export default function PlotPage() {
                   <select
                     value={computeOp}
                     onChange={(e) => setComputeOp(e.target.value as "min" | "max" | "sum")}
+                    disabled={computing}
                   >
                     <option value="min">Min</option>
                     <option value="max">Max</option>
@@ -160,11 +165,15 @@ export default function PlotPage() {
                   onClick={handleCompute}
                   disabled={!computeCol || computing}
                 >
-                  {computing ? "Computing..." : "Compute"}
+                  {computing ? <ButtonPending label="Computing…" /> : "Compute"}
                 </button>
               </div>
+              {computing && (
+                <p className="action-status" role="status">Running statistic on the full column…</p>
+              )}
               {computeError && <p className="error">{computeError}</p>}
-              {computeResult && (
+              {computing && <ComputeResultSkeleton />}
+              {!computing && computeResult && (
                 <div className="compute-result">
                   {computeResult.value !== null ? (
                     <p>
@@ -192,7 +201,7 @@ export default function PlotPage() {
               <div className="plot-form">
                 <div className="form-group">
                   <label>Column 1 (X-axis)</label>
-                  <select value={col1} onChange={(e) => setCol1(e.target.value)}>
+                  <select value={col1} onChange={(e) => setCol1(e.target.value)} disabled={plotting}>
                     <option value="">Select column</option>
                     {selectedDataset.column_names.map((col) => (
                       <option key={col} value={col}>{col}</option>
@@ -202,7 +211,7 @@ export default function PlotPage() {
 
                 <div className="form-group">
                   <label>Column 2 (Y-axis)</label>
-                  <select value={col2} onChange={(e) => setCol2(e.target.value)}>
+                  <select value={col2} onChange={(e) => setCol2(e.target.value)} disabled={plotting}>
                     <option value="">Select column</option>
                     {selectedDataset.column_names.map((col) => (
                       <option key={col} value={col}>{col}</option>
@@ -212,7 +221,11 @@ export default function PlotPage() {
 
                 <div className="form-group">
                   <label>Chart type</label>
-                  <select value={chartType} onChange={(e) => setChartType(e.target.value as ChartType)}>
+                  <select
+                    value={chartType}
+                    onChange={(e) => setChartType(e.target.value as ChartType)}
+                    disabled={plotting}
+                  >
                     <option value="bar">Bar</option>
                     <option value="line">Line</option>
                     <option value="scatter">Scatter</option>
@@ -224,16 +237,19 @@ export default function PlotPage() {
                   onClick={handlePlot}
                   disabled={!col1 || !col2 || plotting}
                 >
-                  {plotting ? "Generating..." : "Generate Chart"}
+                  {plotting ? <ButtonPending label="Generating…" /> : "Generate Chart"}
                 </button>
               </div>
 
+              {plotting && (
+                <p className="action-status" role="status">Building chart — hang tight if the API is waking up.</p>
+              )}
               {plotError && <p className="error">{plotError}</p>}
             </section>
 
             {(plotting || plotData) && (
               <section className="chart-section surface-panel">
-                <h2>Chart</h2>
+                <h2>{plotting ? "Generating chart…" : "Chart"}</h2>
                 {plotting && <ChartSkeleton />}
                 {!plotting && plotData && (
                   <>

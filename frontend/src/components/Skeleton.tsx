@@ -146,3 +146,22 @@ export function FormFieldSkeleton() {
     </div>
   );
 }
+
+/** Placeholder while a compute request is in flight. */
+export function ComputeResultSkeleton() {
+  return (
+    <div className="compute-result compute-result--skeleton" aria-busy="true" aria-label="Computing">
+      <SkeletonLine width="55%" height="1rem" />
+    </div>
+  );
+}
+
+/** Inline button pending label with spinner. */
+export function ButtonPending({ label }: { label: string }) {
+  return (
+    <span className="btn-pending">
+      <span className="btn-spinner" aria-hidden />
+      {label}
+    </span>
+  );
+}

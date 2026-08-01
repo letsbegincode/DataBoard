@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { resolveDisplayName } from "../lib/userGreeting";
+import { ButtonPending } from "./Skeleton";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
     logout();
     navigate("/login");
   };
@@ -29,7 +34,9 @@ export default function Navbar() {
             Hi, {name}
           </span>
         )}
-        <button onClick={handleLogout}>Logout</button>
+        <button onClick={handleLogout} disabled={loggingOut}>
+          {loggingOut ? <ButtonPending label="Logging out…" /> : "Logout"}
+        </button>
       </div>
     </nav>
   );

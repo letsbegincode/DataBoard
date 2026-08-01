@@ -8,18 +8,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const { login, register, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (user && !submitting) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, navigate, submitting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError("");
+    setSubmitting(true);
     try {
       if (isRegister) {
         await register(name.trim(), email.trim(), password);
@@ -27,6 +30,7 @@ export default function LoginPage() {
         await login(email.trim(), password);
       }
       navigate("/");
+      // Keep submitting=true until unmount so the UI doesn't flash idle
     } catch (err: any) {
       const detail = err.response?.data?.detail;
       if (typeof detail === "string") {
@@ -36,14 +40,15 @@ export default function LoginPage() {
       } else {
         setError("Something went wrong");
       }
+      setSubmitting(false);
     }
   };
 
-  if (user) return null;
+  if (user && !submitting) return null;
 
   return (
-    <div className="login-page">
-      <div className="login-card">
+    <div className={`login-page${submitting ? " login-page--busy" : ""}`}>
+      <div className="login-card" aria-busy={submitting}>
         <p className="eyebrow">DataBoard</p>
         <h1>{isRegister ? "Create account" : "Welcome back"}</h1>
         <p className="login-lead">
@@ -63,6 +68,7 @@ export default function LoginPage() {
                 required
                 maxLength={50}
                 autoComplete="name"
+                disabled={submitting}
               />
             </div>
           )}
@@ -75,6 +81,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
+              disabled={submitting}
             />
           </div>
           <div className="form-group">
@@ -88,14 +95,37 @@ export default function LoginPage() {
               minLength={6}
               maxLength={128}
               autoComplete={isRegister ? "new-password" : "current-password"}
+              disabled={submitting}
             />
           </div>
           {error && <p className="error">{error}</p>}
-          <button type="submit">{isRegister ? "Register" : "Login"}</button>
+          <button type="submit" disabled={submitting} className="login-submit">
+            {submitting ? (
+              <span className="btn-pending">
+                <span className="btn-spinner" aria-hidden />
+                {isRegister ? "Creating account…" : "Signing in…"}
+              </span>
+            ) : (
+              isRegister ? "Register" : "Login"
+            )}
+          </button>
+          {submitting && (
+            <p className="login-status" role="status">
+              Talking to the API — first request after idle can take a few seconds.
+            </p>
+          )}
         </form>
         <p className="toggle-auth">
           {isRegister ? "Already have an account?" : "Don't have an account?"}
-          <button type="button" onClick={() => setIsRegister(!isRegister)}>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={() => {
+              if (submitting) return;
+              setIsRegister(!isRegister);
+              setError("");
+            }}
+          >
             {isRegister ? "Login" : "Register"}
           </button>
         </p>
