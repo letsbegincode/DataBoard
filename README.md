@@ -2,13 +2,16 @@
 
 Full-stack app for authenticated users to **upload CSV datasets**, preview/delete them, **compute** min/max/sum on numeric columns, and **plot** two columns with Apache ECharts.
 
-**Public repo:** https://github.com/letsbegincode/DataBoard
+**Public repo:** https://github.com/letsbegincode/DataBoard  
+**Live app:** https://data-board-alpha.vercel.app  
+**API:** https://databoard-f8r1.onrender.com  
 
 - [architecture.md](./architecture.md) — system design, layers, DB schema  
 - [api.md](./api.md) — endpoint map  
 - [assumptions.md](./assumptions.md) — technical choices where the spec is silent  
 - [deployments.md](./deployments.md) — live demo (Vercel + Render + Neon) and why first load can be slow  
 
+> Render free tier may take ~30–50s to wake on the first API request after idle.
 Original Coderbyte brief + spec: [`assignment/`](./assignment/)
 
 ---

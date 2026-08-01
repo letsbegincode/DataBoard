@@ -70,7 +70,7 @@ Register → upload CSV → preview → plot → confirm login still works after
 | `ALGORITHM` | `HS256` |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `15` |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | `7` |
-| `FRONTEND_URL` | `https://YOUR-APP.vercel.app` |
+| `FRONTEND_URL` | `https://data-board-alpha.vercel.app` (exact Vercel origin, no trailing slash) |
 | `COOKIE_SECURE` | `true` |
 | `COOKIE_SAMESITE` | `none` |
 | `MAX_UPLOAD_BYTES` | optional; default `5242880` (5 MB) |
