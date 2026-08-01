@@ -6,11 +6,11 @@ Optional live hosting for the take-home (not required by the assignment spec).
 
 | Service | URL |
 |---|---|
-| **API** | https://databoard-f8r1.onrender.com |
-| **API docs** | https://databoard-f8r1.onrender.com/docs |
 | **App (Vercel)** | https://data-board-alpha.vercel.app |
 
 > **Why the first request feels slow:** Render’s **free tier** spins down the API after idle time. The next hit can take **~30–50 seconds** (“cold start”) while the instance wakes. After that, responses are normal until it sleeps again. This is a free-tier tradeoff, not an app bug.
+
+> **API `/docs`:** Intentionally **disabled on Render**. When `FRONTEND_URL` is the production Vercel origin (not localhost), FastAPI turns off `/docs`, `/redoc`, and `/openapi.json` so the live API does not expose Swagger. Use local `http://localhost:8000/docs` or [`api.md`](./api.md). The Render API base URL is not listed here on purpose.
 
 ---
 
@@ -45,7 +45,7 @@ Browser
 1. Import same GitHub repo  
 2. **Root directory:** `frontend`  
 3. Framework: Vite · Build: `npm run build` · Output: `dist`  
-4. Env: `VITE_API_URL=https://databoard-f8r1.onrender.com`  
+4. Env: `VITE_API_URL=https://<your-service>.onrender.com` (no trailing slash)  
 5. Deploy  
 6. SPA routes: `frontend/vercel.json` rewrites deep links (`/plot`, `/data`, …) to `index.html` so refresh does not 404
 
@@ -79,13 +79,13 @@ Register → upload CSV → preview → plot → confirm login still works after
 | `AUTH_RATE_LIMIT_PER_MINUTE` | optional; default `20` |
 | `PYTHON_VERSION` | `3.11.9` (recommended) |
 
-> With a non-localhost `FRONTEND_URL`, OpenAPI `/docs` is disabled. Upload/compute caps and in-process auth rate limits apply. Access JWT remains in `localStorage` (documented tradeoff).
+> Upload/compute caps and in-process auth rate limits apply in production. Access JWT remains in `localStorage` (documented tradeoff). OpenAPI `/docs` behavior is covered in the Live demo note above.
 
 ### Vercel (frontend)
 
 | Key | Example / notes |
 |---|---|
-| `VITE_API_URL` | `https://databoard-f8r1.onrender.com` (no trailing slash) |
+| `VITE_API_URL` | `https://<your-service>.onrender.com` (no trailing slash) |
 
 Local dev needs none of the Vercel vars; frontend defaults to `http://localhost:8000`.
 

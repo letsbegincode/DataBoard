@@ -4,7 +4,6 @@ Full-stack app for authenticated users to **upload CSV datasets**, preview/delet
 
 **Public repo:** https://github.com/letsbegincode/DataBoard  
 **Live app:** https://data-board-alpha.vercel.app  
-**API:** https://databoard-f8r1.onrender.com  
 
 - [architecture.md](./architecture.md) — system design, layers, DB schema  
 - [api.md](./api.md) — endpoint map  
@@ -76,7 +75,6 @@ uvicorn main:app --reload
 ```
 
 - Health: http://localhost:8000/health → `{"status":"ok"}`
-- Swagger: http://localhost:8000/docs
 
 Tables (`users`, `datasets`, `data_rows`) are created on startup via `Base.metadata.create_all()`.
 

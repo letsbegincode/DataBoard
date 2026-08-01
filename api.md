@@ -66,4 +66,4 @@ Auth: Bearer access token unless noted. Refresh uses cookie.
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/health` | Liveness `{ "status": "ok" }` |
-| GET | `/docs` | OpenAPI Swagger UI |
+| GET | `/docs` | OpenAPI Swagger UI (**local only** — disabled when `FRONTEND_URL` is not localhost) |
