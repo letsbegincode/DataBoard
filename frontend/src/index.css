@@ -268,9 +268,19 @@ code {
   gap: 0.75rem;
 }
 
-.navbar-user span {
+.navbar-user span,
+.navbar-greet {
   font-size: 0.9rem;
   opacity: 0.85;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar-greet {
+  opacity: 1;
+  font-weight: 600;
 }
 
 .navbar-user button {
@@ -447,6 +457,14 @@ code {
 
 .hero-panel .eyebrow {
   text-align: center;
+}
+
+.welcome-greet {
+  margin: 0.35rem 0 0.65rem;
+  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+  font-weight: 600;
+  color: var(--accent-hover, #0f6b4c);
+  letter-spacing: 0.01em;
 }
 
 .hero-panel h1 {
@@ -837,8 +855,7 @@ tbody tr:hover {
 
 /* ---------- Plot ---------- */
 
-.dataset-picker .form-group,
-.plot-form .form-group {
+.dataset-picker .form-group {
   margin-bottom: 0.85rem;
   max-width: min(520px, 100%);
 }
@@ -847,14 +864,29 @@ tbody tr:hover {
 .plot-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: end;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+}
+
+/* Inline rows: no bottom margin — flex gap + align-items keep controls level with the button */
+.compute-form .form-group,
+.plot-form .form-group {
+  margin-bottom: 0;
+  max-width: min(520px, 100%);
 }
 
 .compute-form select,
 .plot-form select {
   width: auto;
   min-width: 140px;
+}
+
+.compute-form > button,
+.plot-form > button {
+  /* Match select vertical padding so the control row shares one baseline */
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  align-self: flex-end;
 }
 
 .compute-result {

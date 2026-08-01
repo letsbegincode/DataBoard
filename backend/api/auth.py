@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from api.deps import get_current_user
 from core.config import settings
 from core.database import get_db
+from core.rate_limit import check_rate_limit, client_ip
 from core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 from models.user import User
-from schemas.auth import RegisterRequest, RegisterResponse, LoginRequest, TokenResponse
+from schemas.auth import RegisterRequest, RegisterResponse, LoginRequest, TokenResponse, MeResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -20,31 +21,51 @@ def _refresh_cookie_kwargs() -> dict:
         "secure": settings.COOKIE_SECURE,
         "samesite": samesite,
         "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        "path": "/",
     }
 
 
+def _auth_rate_limit(request: Request, route: str) -> None:
+    check_rate_limit(
+        f"auth:{route}:{client_ip(request)}",
+        settings.AUTH_RATE_LIMIT_PER_MINUTE,
+        60,
+    )
+
+
 @router.post("/register", response_model=RegisterResponse, status_code=201)
-def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    if len(data.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+def register(data: RegisterRequest, request: Request, db: Session = Depends(get_db)):
+    _auth_rate_limit(request, "register")
 
     existing = db.query(User).filter(User.email == data.email).first()
     if existing:
-        raise HTTPException(status_code=409, detail="Email already registered")
+        # Avoid email enumeration — same shape as a generic failure
+        raise HTTPException(
+            status_code=409,
+            detail="Could not register with those credentials",
+        )
 
     user = User(
         email=data.email,
+        name=data.name,
         hashed_password=hash_password(data.password),
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    return RegisterResponse(id=user.id, email=user.email, message="User registered successfully")
+    return RegisterResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        message="User registered successfully",
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: LoginRequest, response: Response, db: Session = Depends(get_db)):
+def login(data: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    _auth_rate_limit(request, "login")
+
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -60,13 +81,15 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
     return TokenResponse(access_token=access_token)
 
 
-@router.get("/me")
+@router.get("/me", response_model=MeResponse)
 def get_me(user: User = Depends(get_current_user)):
-    return {"id": user.id, "email": user.email}
+    return MeResponse(id=user.id, email=user.email, name=user.name)
 
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
+    _auth_rate_limit(request, "refresh")
+
     token = request.cookies.get("refresh_token")
     if not token:
         raise HTTPException(status_code=401, detail="No refresh token")
@@ -99,5 +122,6 @@ def logout(response: Response):
         httponly=kwargs["httponly"],
         secure=kwargs["secure"],
         samesite=kwargs["samesite"],
+        path=kwargs["path"],
     )
     return {"message": "Logged out successfully"}

@@ -1,13 +1,17 @@
 import io
+import logging
 import math
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
+from core.config import settings
 from core.database import get_db
 from api.deps import get_current_user
 from models.user import User
 from models.dataset import Dataset, DataRow
 from schemas.dataset import DatasetResponse, DatasetListResponse, DatasetPreviewResponse, PlotDataResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/dataset", tags=["dataset"])
 
@@ -36,14 +40,34 @@ def upload_dataset(
             detail=f"You already have a dataset named '{dataset_name}'. Choose a different name.",
         )
 
+    max_bytes = settings.MAX_UPLOAD_BYTES
+    content = file.file.read(max_bytes + 1)
+    if len(content) > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"CSV too large. Maximum size is {max_bytes // (1024 * 1024)} MB.",
+        )
+
     try:
-        content = file.file.read()
         df = pd.read_csv(io.BytesIO(content))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid CSV file: {str(e)}")
+        logger.warning("CSV parse failed for user=%s: %s", user.id, e)
+        raise HTTPException(status_code=400, detail="Invalid CSV file")
 
     if df.empty:
         raise HTTPException(status_code=400, detail="CSV file is empty")
+
+    if len(df.columns) > settings.MAX_UPLOAD_COLUMNS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Too many columns. Maximum is {settings.MAX_UPLOAD_COLUMNS}.",
+        )
+
+    if len(df) > settings.MAX_UPLOAD_ROWS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Too many rows. Maximum is {settings.MAX_UPLOAD_ROWS}.",
+        )
 
     dataset = Dataset(
         user_id=user.id,

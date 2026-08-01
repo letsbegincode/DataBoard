@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +22,7 @@ export default function LoginPage() {
     setError("");
     try {
       if (isRegister) {
-        await register(email.trim(), password);
+        await register(name.trim(), email.trim(), password);
       } else {
         await login(email.trim(), password);
       }
@@ -47,10 +48,24 @@ export default function LoginPage() {
         <h1>{isRegister ? "Create account" : "Welcome back"}</h1>
         <p className="login-lead">
           {isRegister
-            ? "Create an account with a valid email and password (min 6 characters)."
+            ? "Tell us your name, then create an account with a valid email and password (6–128 characters)."
             : "Sign in to manage private CSV datasets, compute stats, and plot charts."}
         </p>
         <form onSubmit={handleSubmit}>
+          {isRegister && (
+            <div className="form-group">
+              <label htmlFor="name">Name</label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                maxLength={50}
+                autoComplete="name"
+              />
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -71,6 +86,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              maxLength={128}
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
           </div>

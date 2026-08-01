@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from core.config import settings
 from core.database import get_db
 from api.deps import get_current_user
 from models.user import User
@@ -29,7 +30,22 @@ def compute_statistic(
             detail=f"Column '{data.column}' not found. Available columns: {dataset.column_names}"
         )
 
-    rows = db.query(DataRow).filter(DataRow.dataset_id == dataset_id).all()
+    if dataset.row_count > settings.MAX_UPLOAD_ROWS:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Dataset has {dataset.row_count} rows; compute is limited to "
+                f"{settings.MAX_UPLOAD_ROWS} rows."
+            ),
+        )
+
+    rows = (
+        db.query(DataRow)
+        .filter(DataRow.dataset_id == dataset_id)
+        .order_by(DataRow.row_index)
+        .limit(settings.MAX_UPLOAD_ROWS)
+        .all()
+    )
     raw_values = [row.data.get(data.column) for row in rows]
 
     if not raw_values:

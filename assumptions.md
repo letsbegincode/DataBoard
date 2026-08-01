@@ -13,7 +13,7 @@ Assumptions fill gaps where [`assignment/ProjectSpec.md`](./assignment/ProjectSp
 | Frontend | **React + Vite + TypeScript** |
 | Database | **Neon PostgreSQL** free tier; connection string includes `?sslmode=require` |
 | Local run | **No Docker** — `uvicorn` + `npm run dev` only |
-| Migrations | **No Alembic** — `Base.metadata.create_all()` on app startup |
+| Migrations | **No Alembic** — `Base.metadata.create_all()` on startup + idempotent `ALTER` for additive columns (e.g. `users.name`) |
 | Deployment | **Not required** for submission; local run is enough |
 
 ---
@@ -24,8 +24,12 @@ Assumptions fill gaps where [`assignment/ProjectSpec.md`](./assignment/ProjectSp
 |---|---|
 | Path style | Singular **`/dataset`** (matches spec), plus `/auth/*` |
 | Auth extras | Spec lists register/login; we also implement **refresh**, **logout**, and **`GET /auth/me`** |
+| Register body | Spec lists email/password; we also require **`name`** (1–50 chars) for greetings |
 | Register / login email | Validated with Pydantic **`EmailStr`** (normalized lower/strip); not mailbox verification |
-| Register response | Spec says “returns JWT”; we return `{ id, email, message }` then **auto-login** on the client |
+| Password length | **6–128** characters (min keeps take-home simple; max avoids Argon2 CPU DoS) |
+| Register response | Spec says “returns JWT”; we return `{ id, email, name, message }` then **auto-login** on the client |
+| Upload limits | Max **5 MB**, **10_000** rows, **50** columns (env-overridable) |
+| Compute guard | Reject / limit at `MAX_UPLOAD_ROWS`; does not load unbounded row sets |
 | Dataset names | **Unique per user** (409 on duplicate); list UI shows the user-given name (filename kept in DB only) |
 | Preview | First **25** rows + column names |
 | Plot | First **30** values for `col1` & `col2` via `GET /dataset/:id/plot` |
@@ -53,11 +57,13 @@ Assumptions fill gaps where [`assignment/ProjectSpec.md`](./assignment/ProjectSp
 | Topic | Assumption |
 |---|---|
 | Password hash | **argon2** (spec allows bcrypt/argon2) |
-| Access token | JWT, **15 min**, stored in `localStorage`, sent as Bearer |
-| Refresh token | JWT, **7 days**, **HttpOnly** cookie only (not in DB) |
+| Access token | JWT, **15 min**, stored in `localStorage`, sent as Bearer (XSS tradeoff; HttpOnly access token is a stretch) |
+| Refresh token | JWT, **7 days**, **HttpOnly** cookie only (not in DB; logout clears cookie client-side — server revoke is stretch) |
 | Refresh rotation | New refresh cookie issued on each successful `/auth/refresh` |
-| CSRF | SameSite=`lax` cookie; dedicated CSRF token not implemented |
+| Auth rate limit | In-process sliding window per IP on `/register`, `/login`, `/refresh` (single worker) |
+| CSRF | SameSite=`lax` locally; production may use `none` for cross-origin refresh — dedicated CSRF token not implemented |
 | CORS | Allow `FRONTEND_URL` with credentials |
+| API docs | `/docs` enabled only when `FRONTEND_URL` looks local |
 
 ---
 
@@ -88,6 +94,7 @@ Assumptions fill gaps where [`assignment/ProjectSpec.md`](./assignment/ProjectSp
 - Redis / Celery / background workers
 - GraphQL
 - Refresh-token family tracking / reuse detection in DB
+- Access JWT in HttpOnly cookie (needs BFF / CSRF design)
 - Async SQLAlchemy / asyncpg
-- Rate limiting
 - Email verification
+- SQL-side aggregates for compute (stretch)

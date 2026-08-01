@@ -73,7 +73,13 @@ Register → upload CSV → preview → plot → confirm login still works after
 | `FRONTEND_URL` | `https://YOUR-APP.vercel.app` |
 | `COOKIE_SECURE` | `true` |
 | `COOKIE_SAMESITE` | `none` |
+| `MAX_UPLOAD_BYTES` | optional; default `5242880` (5 MB) |
+| `MAX_UPLOAD_ROWS` | optional; default `10000` |
+| `MAX_UPLOAD_COLUMNS` | optional; default `50` |
+| `AUTH_RATE_LIMIT_PER_MINUTE` | optional; default `20` |
 | `PYTHON_VERSION` | `3.11.9` (recommended) |
+
+> With a non-localhost `FRONTEND_URL`, OpenAPI `/docs` is disabled. Upload/compute caps and in-process auth rate limits apply. Access JWT remains in `localStorage` (documented tradeoff).
 
 ### Vercel (frontend)
 

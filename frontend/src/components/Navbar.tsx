@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { resolveDisplayName } from "../lib/userGreeting";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -9,6 +10,8 @@ export default function Navbar() {
     logout();
     navigate("/login");
   };
+
+  const name = user ? resolveDisplayName(user) : "";
 
   return (
     <nav className="navbar">
@@ -21,7 +24,11 @@ export default function Navbar() {
         <Link to="/plot">Plot</Link>
       </div>
       <div className="navbar-user">
-        {user && <span>{user.email}</span>}
+        {user?.email && (
+          <span className="navbar-greet" title={user.email}>
+            Hi, {name}
+          </span>
+        )}
         <button onClick={handleLogout}>Logout</button>
       </div>
     </nav>

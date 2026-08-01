@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import InfoCard from "../components/InfoCard";
 import { useAuth } from "../context/AuthContext";
+import { welcomeLine } from "../lib/userGreeting";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -12,10 +13,15 @@ export default function HomePage() {
       <main className="page-content page-content--centered">
         <header className="hero-panel">
           <p className="eyebrow">xVector Labs · DataBoard</p>
+          {user?.email && (
+            <p className="welcome-greet" aria-live="polite">
+              {welcomeLine(user)} — welcome to DataBoard
+            </p>
+          )}
           <h1>Turn CSV uploads into insight</h1>
           <p className="page-lead page-lead--centered">
-            Hello{user?.email ? `, ${user.email}` : ""}. Upload your datasets, run clear statistics,
-            and explore charts in a private workspace built for everyday data work.
+            Upload your datasets, run clear statistics, and explore charts in a private
+            workspace built for everyday data work.
           </p>
           <div className="hero-actions hero-actions--centered">
             <Link className="btn-primary-link" to="/data">Go to Data</Link>

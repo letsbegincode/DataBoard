@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -52,8 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(meRes.data);
   };
 
-  const register = async (email: string, password: string) => {
-    await client.post("/auth/register", { email, password });
+  const register = async (name: string, email: string, password: string) => {
+    await client.post("/auth/register", { name, email, password });
     // Auto-login after register
     await login(email, password);
   };
