@@ -5,22 +5,7 @@ import InfoCard from "../components/InfoCard";
 import { ChartSkeleton, FormFieldSkeleton } from "../components/Skeleton";
 import { Dataset, PlotData, ComputeResponse } from "../types";
 import { listDatasets, getPlotData, computeStatistic } from "../api/datasets";
-
-type ChartType = "scatter" | "line" | "bar";
-
-function isNumericValue(v: unknown): boolean {
-  if (v === null || v === undefined || v === "") return false;
-  if (typeof v === "number") return Number.isFinite(v);
-  if (typeof v === "string") {
-    const n = Number(v);
-    return v.trim() !== "" && Number.isFinite(n);
-  }
-  return false;
-}
-
-function toNumber(v: unknown): number {
-  return typeof v === "number" ? v : Number(v);
-}
+import { buildChartOption, type ChartType } from "../lib/chartBuilder";
 
 export default function PlotPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -96,145 +81,7 @@ export default function PlotPage() {
 
   const { option, hint } = useMemo(() => {
     if (!plotData) return { option: {}, hint: "" };
-
-    const xRaw = plotData.col1_values;
-    const yRaw = plotData.col2_values;
-    const xNumeric = xRaw.every((v) => v == null || isNumericValue(v));
-    const yNumeric = yRaw.every((v) => v == null || isNumericValue(v));
-    const xHasNum = xRaw.some(isNumericValue);
-    const yHasNum = yRaw.some(isNumericValue);
-
-    if (chartType === "scatter") {
-      if (xHasNum && yHasNum && xNumeric && yNumeric) {
-        return {
-          hint: "Scatter: both axes numeric.",
-          option: {
-            title: { text: `${plotData.col1_name} vs ${plotData.col2_name}` },
-            tooltip: { trigger: "item" },
-            grid: { left: 56, right: 24, top: 56, bottom: 56 },
-            xAxis: { name: plotData.col1_name, type: "value", scale: true },
-            yAxis: { name: plotData.col2_name, type: "value", scale: true },
-            series: [{
-              type: "scatter",
-              symbolSize: 10,
-              data: xRaw.map((v, i) => [toNumber(v), toNumber(yRaw[i])]),
-            }],
-          },
-        };
-      }
-
-      const xCats = xRaw.map((v) => (v == null ? "—" : String(v)));
-      const yCats = yRaw.map((v) => (v == null ? "—" : String(v)));
-      const uniqX = [...new Set(xCats)];
-      const uniqY = [...new Set(yCats)];
-      return {
-        hint: "Scatter with text columns: category axes (works for product vs region).",
-        option: {
-          title: { text: `${plotData.col1_name} vs ${plotData.col2_name}` },
-          tooltip: {
-            trigger: "item",
-            formatter: (p: { value?: unknown }) => {
-              const val = p.value;
-              if (!Array.isArray(val) || val.length < 2) return "";
-              return `${val[0]} → ${val[1]}`;
-            },
-          },
-          grid: { left: 100, right: 24, top: 56, bottom: 90 },
-          xAxis: {
-            type: "category",
-            data: uniqX,
-            name: plotData.col1_name,
-            axisLabel: { rotate: 35 },
-          },
-          yAxis: {
-            type: "category",
-            data: uniqY,
-            name: plotData.col2_name,
-          },
-          series: [{
-            type: "scatter",
-            symbolSize: 14,
-            data: xCats.map((x, i) => [x, yCats[i]]),
-          }],
-        },
-      };
-    }
-
-    if (yHasNum) {
-      return {
-        hint: `${chartType === "bar" ? "Bar" : "Line"}: categories on X, numeric values on Y.`,
-        option: {
-          title: { text: `${plotData.col2_name} by ${plotData.col1_name}` },
-          tooltip: { trigger: "axis" },
-          grid: { left: 56, right: 24, top: 56, bottom: 90 },
-          xAxis: {
-            type: "category",
-            data: xRaw.map((v) => (v == null ? "—" : String(v))),
-            name: plotData.col1_name,
-            axisLabel: { rotate: 35 },
-          },
-          yAxis: { type: "value", name: plotData.col2_name },
-          series: [{
-            type: chartType,
-            data: yRaw.map((v) => (isNumericValue(v) ? toNumber(v) : null)),
-            name: plotData.col2_name,
-          }],
-        },
-      };
-    }
-
-    if (xHasNum && xNumeric) {
-      return {
-        hint: "Y was text — swapped axes so the numeric column is on Y.",
-        option: {
-          title: { text: `${plotData.col1_name} by ${plotData.col2_name}` },
-          tooltip: { trigger: "axis" },
-          grid: { left: 56, right: 24, top: 56, bottom: 90 },
-          xAxis: {
-            type: "category",
-            data: yRaw.map((v) => (v == null ? "—" : String(v))),
-            name: plotData.col2_name,
-            axisLabel: { rotate: 35 },
-          },
-          yAxis: { type: "value", name: plotData.col1_name },
-          series: [{
-            type: chartType,
-            data: xRaw.map((v) => (isNumericValue(v) ? toNumber(v) : null)),
-            name: plotData.col1_name,
-          }],
-        },
-      };
-    }
-
-    const counts = new Map<string, number>();
-    for (const v of xRaw) {
-      const key = v == null ? "—" : String(v);
-      counts.set(key, (counts.get(key) || 0) + 1);
-    }
-    const labels = [...counts.keys()];
-    const values = labels.map((k) => counts.get(k)!);
-    return {
-      hint:
-        `Both columns are text. Showing counts per “${plotData.col1_name}”. ` +
-        `Tip: set Y to price/quantity/revenue, or use Scatter for product × region.`,
-      option: {
-        title: { text: `Count by ${plotData.col1_name}` },
-        tooltip: { trigger: "axis" },
-        grid: { left: 56, right: 24, top: 56, bottom: 90 },
-        xAxis: {
-          type: "category",
-          data: labels,
-          name: plotData.col1_name,
-          axisLabel: { rotate: 35 },
-        },
-        yAxis: { type: "value", name: "count" },
-        series: [{
-          type: chartType === "line" ? "line" : "bar",
-          data: values,
-          name: "count",
-        }],
-      },
-    };
+    return buildChartOption(plotData, chartType);
   }, [plotData, chartType]);
 
   return (
@@ -248,7 +95,8 @@ export default function PlotPage() {
         <InfoCard title="About this page" defaultOpen={false}>
           <p>
             Compute min / max / sum on numeric columns, then plot two columns with Apache ECharts.
-            Scatter works for text×text (e.g. product vs region). Bar/line prefer a numeric Y column.
+            Bar/line average the numeric column per category (one bar/point per group).
+            Scatter plots one point per row; text×text works for product vs region.
           </p>
         </InfoCard>
 
@@ -334,7 +182,9 @@ export default function PlotPage() {
               <h2>3. Configure chart</h2>
               <InfoCard title="Chart tips" defaultOpen={false} className="info-card--nested">
                 <p>
-                  Loads the first ~30 rows. Try <strong>product × price</strong> (bar) or{" "}
+                  Loads the first ~30 rows. Bar/line group and average (e.g.{" "}
+                  <strong>store × rating</strong> → avg rating per store). Scatter keeps row-level
+                  points. Try <strong>product × price</strong> (bar) or{" "}
                   <strong>product × region</strong> (scatter).
                 </p>
               </InfoCard>

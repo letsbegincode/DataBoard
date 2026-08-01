@@ -47,6 +47,7 @@ Browser
 3. Framework: Vite · Build: `npm run build` · Output: `dist`  
 4. Env: `VITE_API_URL=https://databoard-f8r1.onrender.com`  
 5. Deploy  
+6. SPA routes: `frontend/vercel.json` rewrites deep links (`/plot`, `/data`, …) to `index.html` so refresh does not 404
 
 ### 3. Wire CORS
 
